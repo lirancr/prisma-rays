@@ -1,0 +1,28 @@
+{
+  "name": "prisma-lens",
+  "version": "0.1.0",
+  "description": "Alternative migration client for prisma ORM",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "plens": "./bin/client.js"
+  },
+  "engines": {
+    "node": "14.17.x"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^3.1.1",
+    "execa": "^5.1.1",
+    "minimist": "^1.2.5",
+    "prisma": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^16.7.13",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.2"
+  }
+}
