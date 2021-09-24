@@ -4,7 +4,8 @@
   "description": "Alternative migration client for prisma ORM",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pretest": "cd ./test/test-project && npm install"
   },
   "repository": {
     "type": "git",
