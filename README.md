@@ -238,7 +238,7 @@ At the moment `prisma lens` only officially support and tested against `postgres
 used internally to perform the different functions. It's possible that these queries are written in a syntax recognized
 by other relational databases but those have not been tested against.
 
-If you're interested in helping with this issue feel free to submit a pull request, adding your [engine file](./engines)
+If you're interested in helping with this issue feel free to submit a pull request, adding your [engine file](./src/engines)
 
 ## Going back to prisma migrate
 
