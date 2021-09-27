@@ -1,15 +1,16 @@
-const path = require('path')
-const fs = require('fs')
-const {PrismaClient} = require("@prisma/client")
-const processArguments = require('./processArguments')
-const { DEFAULT_CONFIG_FILE_NAME, UTF8, ALLOWED_ENGINES } = require('./constants')
-const { getDatabaseUrlEnvVarNameFromSchema, getDatabaseEngineFromSchema } = require('./utils')
+import type { LensConfig } from './types'
+import * as path from 'path'
+import * as fs from 'fs'
+import {PrismaClient} from "@prisma/client"
+import processArguments from './processArguments'
+import { DEFAULT_CONFIG_FILE_NAME, UTF8, ALLOWED_ENGINES } from './constants'
+import { getDatabaseUrlEnvVarNameFromSchema, getDatabaseEngineFromSchema } from './utils'
 
-const configError = (msg) => {
+const configError = (msg: string) => {
 	throw new Error('LensConfigError: ' + msg);
 }
 
-const verifyMigrationsDir = ({ migrationsDir }) => {
+const verifyMigrationsDir = ({ migrationsDir }: LensConfig) => {
 	if (!migrationsDir) {
 		configError('Missing config value for migrationsDir')
 	}
@@ -20,14 +21,14 @@ const verifyMigrationsDir = ({ migrationsDir }) => {
 	}
 }
 
-const verifySchemaPath = ({ schemaPath }) => {
+const verifySchemaPath = ({ schemaPath }: LensConfig) => {
 	if (!schemaPath) {
 		configError('Missing config value for schemaPath')
 	}
 
 	const resolved = path.resolve(schemaPath)
 	if (!fs.existsSync(resolved)) {
-		configError('Bad schemaPath value, file doesn\'t exists: ', resolved)
+		configError(`Bad schemaPath value, file doesn\'t exists: ${resolved}`)
 	}
 
 	const schema = fs.readFileSync(resolved, UTF8)
@@ -42,12 +43,12 @@ const verifySchemaPath = ({ schemaPath }) => {
 	}
 
 	const dbProvider = getDatabaseEngineFromSchema(schema)
-	if (!ALLOWED_ENGINES.includes(dbProvider)) {
+	if (!ALLOWED_ENGINES.includes(dbProvider!)) {
 		configError('Bad prisma schema file, your schema specifies an unsupported database provider: "'+dbProvider +'", must be one of '+ALLOWED_ENGINES.join(', '))
 	}
 }
 
-const verifyDatabaseUrl = async ({ databaseUrl }) => {
+const verifyDatabaseUrl = async ({ databaseUrl }: LensConfig) => {
 	if (!databaseUrl) {
 		configError('Missing config value for databaseUrl')
 	}
@@ -62,18 +63,18 @@ const verifyDatabaseUrl = async ({ databaseUrl }) => {
 	try {
 		await prisma.$connect()
 		await prisma.$disconnect()
-	} catch (e) {
+	} catch (e: any) {
 		configError('Bad databaseUrl value, unable to connect to database:\n' + e.message)
 	}
 }
 
-module.exports = async () => {
+export default async (): Promise<void> => {
 	const configFilePath = path.resolve(processArguments().conf || DEFAULT_CONFIG_FILE_NAME)
 	if (!fs.existsSync(configFilePath)) {
-		throw new Error(`Cannot file config file at: configFilePath\nDid you forget to run "plens init" ?`)
+		throw new Error(`Cannot file config file at: configFilePath\nDid you forget to run "npx plens init" ?`)
 	}
 
-	const config = require(configFilePath)
+	const config: LensConfig = require(configFilePath)
 
 	await verifyMigrationsDir(config)
 	await verifySchemaPath(config)

@@ -1,14 +1,15 @@
-const { prismaSync, ask } = require('../cmd')
-const makeMigration = require('./makeMigration')
-const migrate = require('./migrate')
-const { getMigrationFolders } = require('../migrationFileUtils')
-const { clearMigrationsTable } = require('../dbcommands')
+import { prismaSync, ask } from '../cmd'
+import makeMigration from './makeMigration'
+import migrate from './migrate'
+import { getMigrationFolders } from '../migrationFileUtils'
+import { clearMigrationsTable } from '../dbcommands'
+import type {PrepareCommand} from "../types";
 
 /**
  *
  * @return {Promise<void>}
  */
-module.exports = async () => {
+const command: PrepareCommand = async (): Promise<void> => {
     // make sure we dont have existing migrations
     if (getMigrationFolders().length > 0) {
         throw new Error('Project already initialized (migrations folder is not empty)')
@@ -27,5 +28,7 @@ module.exports = async () => {
 
     const initialMigrationFile = await makeMigration('init')
 
-    await migrate({name: initialMigrationFile})
+    await migrate({name: initialMigrationFile!})
 }
+
+export default command

@@ -8,13 +8,16 @@
  * When changing one engine you must change them all!
  */
 
-const { ALLOWED_ENGINES } = require('./constants')
-const fs = require('fs')
-const path = require('path')
+import type { IDatabaseEngine } from './types'
+import { ALLOWED_ENGINES } from './constants'
+import * as fs from 'fs'
+import * as path from 'path'
 
-const enginesDir = path.join(__dirname, 'engines')
+type EnginesMap = { [provider: string]: IDatabaseEngine}
 
-const engines = fs.readdirSync(enginesDir).reduce((agg, file) => {
+const enginesDir: string = path.join(__dirname, 'engines')
+
+const engines: EnginesMap = fs.readdirSync(enginesDir).reduce((agg: EnginesMap, file: string) => {
 	const provider = file.split('.js')[0]
 	if (ALLOWED_ENGINES.includes(provider)) {
 		agg[provider] = require(path.join(enginesDir, provider))
@@ -24,7 +27,7 @@ const engines = fs.readdirSync(enginesDir).reduce((agg, file) => {
 	return agg
 }, {})
 
-let functionsHash
+let functionsHash: string
 // Make sure all supported engines contain all the necessary functions
 Object.values(engines)
 	.forEach((engine) => {
@@ -36,12 +39,10 @@ Object.values(engines)
 		}
 	})
 
-module.exports = {
-	engineFor: (provider) => {
-		const engine = engines[provider];
-		if (!engine) {
-			throw new Error('Unknown engine provider '+provider)
-		}
-		return engine
-	},
+export const engineFor = (provider: string): IDatabaseEngine => {
+	const engine: IDatabaseEngine | undefined = engines[provider]
+	if (!engine) {
+		throw new Error('Unknown engine provider '+provider)
+	}
+	return engine
 }

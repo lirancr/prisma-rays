@@ -1,4 +1,6 @@
-module.exports = {
+import type { IDatabaseEngine } from "../types";
+
+const engine: IDatabaseEngine = {
 	deleteMigrations: () => 'DELETE FROM _prisma_migrations;',
 	deleteMigrationsByName: (name) => `DELETE FROM _prisma_migrations where migration_name=${name};`,
 	selectMigrations: () => `SELECT * FROM _prisma_migrations;`,
@@ -8,3 +10,5 @@ module.exports = {
 	transactionCommit: () => `COMMIT;`,
 	transactionRollback: () => `ROLLBACK;`,
 }
+
+module.exports = engine

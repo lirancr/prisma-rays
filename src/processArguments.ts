@@ -1,6 +1,8 @@
-const processArguments = require('minimist')(process.argv.slice(2))
+import minimist from 'minimist'
 
-module.exports = (...requiredArguments) => {
+const processArguments: any = minimist(process.argv.slice(2))
+
+const assertRequiredArguments = (...requiredArguments: string[]) => {
     requiredArguments.forEach(arg => {
         const argValue = processArguments[arg]
 
@@ -15,3 +17,6 @@ module.exports = (...requiredArguments) => {
 
     return processArguments
 }
+
+
+export default assertRequiredArguments

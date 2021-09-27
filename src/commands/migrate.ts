@@ -1,10 +1,11 @@
-const { getMigrationFolders } = require("../migrationFileUtils");
-const { getAppliedMigrations, insertMigration, deleteMigration, executeRawOne, prisma } = require('../dbcommands')
-const { prismaSync } = require("../cmd");
-const { SCHEMA_FILE_NAME } = require('../constants')
-const {schema, migrationsPath, databaseEngine} = require("../config");
-const path = require('path');
-const fs = require('fs');
+import { getMigrationFolders } from "../migrationFileUtils";
+import { getAppliedMigrations, insertMigration, deleteMigration, executeRawOne, prisma } from '../dbcommands'
+import { prismaSync } from "../cmd";
+import { SCHEMA_FILE_NAME } from '../constants'
+import {schema, migrationsPath, databaseEngine} from "../config";
+import * as path from 'path';
+import * as  fs from 'fs';
+import type {IMigrationScript, MigrateCommand} from "../types";
 
 /**
  *
@@ -12,7 +13,7 @@ const fs = require('fs');
  * @param fake? optional flag to only apply changes to migration state without applying database changes
  * @return {Promise<void>}
  */
-module.exports = async ({ name, fake } = {}) => {
+const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
     const allMigrations = getMigrationFolders()
     const currentDbState = await getAppliedMigrations()
 
@@ -21,7 +22,7 @@ module.exports = async ({ name, fake } = {}) => {
         throw new Error('Unable to migrate database - database is at a later state than there are migrations.')
     }
 
-    currentDbState.forEach((n, i) => {
+    currentDbState.forEach((n: string, i: number) => {
         if (n !== allMigrations[i]) {
             throw new Error(`Unable to migrate database - database has an unexpected intermediate migration which is missing from the migrations folder.\nExpected ${n} but found ${allMigrations[i]} at index ${i}`)
         }
@@ -59,7 +60,7 @@ module.exports = async ({ name, fake } = {}) => {
 
     for (let migration of migrationsToApply) {
         console.log(fake ? 'Fake -' : '', migrateUp ? 'Applying' : 'Reverting','migration -', migration)
-        const migrationScript = require(path.join(migrationsPath, migration, 'migration.js'))
+        const migrationScript: IMigrationScript = require(path.join(migrationsPath, migration, 'migration.js'))
         if (!fake) {
             const migrationCommand = migrateUp ? migrationScript.up : migrationScript.down
             try {
@@ -90,3 +91,5 @@ module.exports = async ({ name, fake } = {}) => {
     console.log('Migration successful, updating client type definitions')
     prismaSync(`generate`)
 }
+
+export default command

@@ -1,12 +1,10 @@
-const path = require('path')
-const fs = require('fs')
-const { DEFAULT_CONFIG_FILE_NAME } = require('../constants');
+import * as path from 'path'
+import * as fs from 'fs'
+import { DEFAULT_CONFIG_FILE_NAME } from '../constants'
+import type
+{InitCommand} from "../types";
 
-/**
- *
- * @return {Promise<void>}
- */
-module.exports = async () => {
+const command: InitCommand = async () => {
     console.log('Setting up Prisma Lens for your project')
 
     console.log('Creating lensconfig file')
@@ -18,3 +16,5 @@ module.exports = async () => {
 
     console.log(`Your project is ready. Review the generated config file at:\n${configFilePath}`)
 }
+
+export default command

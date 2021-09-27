@@ -27,18 +27,20 @@ Prisma Lens is heavily inspired by the UX given by the [Django](https://www.djan
 
 #### Installation
 
-1. `npm i -g prisma-lens` or `npm i prisma-lens`
-2. in your project's root directory run `plens init`
+1. Install package `npm i  prisma-lens`
+
+   You may also install as global package instead of using `npx`
+2. in your project's root directory run `npx plens init`
 3. Open the generated `lensconfig.js` file and update it according to your project's setup.
 
 If your project does not have existing migrations created from `prisma migrate` you can opt in to `prisma lens`
-by running `plens prepare`. Otherwise, see [Adding to existing projects](#adding-to-existing-projects)
+by running `npx plens prepare`. Otherwise, see [Adding to existing projects](#adding-to-existing-projects)
 
 #### Adding to existing projects
 
 1. make sure your database is currently at the starting state that fits your project.
 2. remove all folders in your migrations directory, only keep the `migration_lock.toml` file.
-3. run `plens prepare`
+3. run `npx plens prepare`
 
 ## Usage
 
@@ -54,7 +56,7 @@ help | None | prints the help chapter on the specific command.
 
 #### init
 
-`plens init`
+`npx plens init`
 
 Setup prisma lens for your project, creating an initial `lensconfig.js` file
 
@@ -62,7 +64,7 @@ init is only ever required once in the entire lifespan of a project
 
 #### prepare
 
-`plens prepare`
+`npx plens prepare`
 
 Initialize the migration system against the current existing database.
 Using this function require to clear the database during the process.
@@ -75,7 +77,7 @@ Prepare is only ever required once in the entire lifespan of a project
 
 #### makemigration
 
-`plens makemigration --name <name> <options>`
+`npx plens makemigration --name <name> <options>`
 
 Options:
 
@@ -98,16 +100,16 @@ This function works by:
 
 create a migration suffixed by `myFirstMigration`:
 
-`plens makemigration --name myFirstMigration`
+`npx plens makemigration --name myFirstMigration`
 
 create a migration or blank if no changes, suffixed by `myFirstMigration`:
 
-`plens makemigration --name myFirstMigration --blank`
+`npx plens makemigration --name myFirstMigration --blank`
 
 
 #### migrate
 
-`plens migrate <options>`
+`npx plens migrate <options>`
 
 Options:
 
@@ -137,24 +139,24 @@ This function works by:
 
 apply all migrations:
 
-`plens migrate`
+`npx plens migrate`
 
 mark all un-applied migrations as applied without running them:
 
-`plens migrate --fake`
+`npx plens migrate --fake`
 
 apply migrations up/down to `myFirstMigration_20211109182020`:
 
-`plens migrate --name myFirstMigration_20211109182020`
+`npx plens migrate --name myFirstMigration_20211109182020`
 
 mark un-applied migrations up/down to `myFirstMigration_20211109182020` as applied/reverted without running them:
 
-`plens migrate --name myFirstMigration_20211109182020 --fake`
+`npx plens migrate --name myFirstMigration_20211109182020 --fake`
 
 
 #### status
 
-`plens status`
+`npx plens status`
 
 log the migration and schema status against the database structure
 
@@ -225,7 +227,7 @@ and the same credentials and host are used as the source database.
 
 As such, using Prisma Lens for generating migrations against cloud hosted shadow databases is not supported.
 
-It is entirely supported to perform migrations (i.e `plens migrate`) on cloud hosted databases. Just not using `makemigrations` command with them.
+It is entirely supported to perform migrations (i.e `npx plens migrate`) on cloud hosted databases. Just not using `makemigrations` command with them.
 
 #### So many logs
 
@@ -243,7 +245,7 @@ If you're interested in helping with this issue feel free to submit a pull reque
 ## Going back to prisma migrate
 
 If you're unhappy with Prisma Lens or simply want to go back to the built in `prisma migrate` tool its easy to do so.
-1. run `plens migrate` to bring your database to the latest version
+1. run `npx plens migrate` to bring your database to the latest version
 2. In the migrations folder, for each migration directory delete all the files except for the `migration.sql`
 3. if installed locally, uninstall prisma lens with `npm uninstall prisma-lens`
 
@@ -253,5 +255,5 @@ If you're unhappy with Prisma Lens or simply want to go back to the built in `pr
 
 your database is empty so it cannot be used to generate the schema (maybe due to previous failure).
 Update your prisma schema to an initial point you want to support and run `npx prisma db push`.
-Then run `plens prepare` again
+Then run `npx plens prepare` again
 

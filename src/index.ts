@@ -1,12 +1,13 @@
-const processArguments = require('./processArguments')
-const verifyConfig = require('./verifyConfig')
+import processArguments from './processArguments'
+import verifyConfig from './verifyConfig'
+import type {InitCommand, MakeMigrationCommand, MigrateCommand, PrepareCommand, StatusCommand} from "./types";
 
-const logHelp = (func, description, options = []) => {
+const logHelp = (func: string, description: string, options: string[][] = []) => {
     const argsData = options.map((pair) => pair.join('   ')).join('\n           ')
     console.log('        ', func, '   ', description, options.length > 0 ? '\n          ' : '', argsData)
 }
 
-const apiHelp = {
+const apiHelp: { [name: string]: () => unknown } = {
     init: () => {
         logHelp('init', 'Setup prisma lens for your project.')
     },
@@ -30,25 +31,25 @@ const apiHelp = {
     }
 }
 
-const commands = {
+const commands: { [name: string]: () => Promise<unknown> } = {
     init: async () => {
-        return require('./commands/init')()
+        return (require('./commands/init') as InitCommand)()
     },
     prepare: async () => {
-        return require('./commands/prepare')()
+        return (require('./commands/prepare') as PrepareCommand)()
     },
     makemigration: async () => {
         const args = processArguments('name')
         const blank = 'blank' in args
-        return require('./commands/makeMigration')(args.name, blank)
+        return (require('./commands/makeMigration') as MakeMigrationCommand)(args.name, blank)
     },
     migrate: async () => {
         const args = processArguments()
         const fake = 'fake' in args
-        return require('./commands/migrate')({ name: args.name, fake })
+        return (require('./commands/migrate') as MigrateCommand)({ name: args.name, fake })
     },
     status: async () => {
-        return require('./commands/status')()
+        return (require('./commands/status') as StatusCommand)()
     },
     help: async () => {
         console.log('Commands\n')
@@ -62,7 +63,7 @@ const commands = {
     }
 }
 
-const command = process.argv[2]
+const command: string = process.argv[2]
 if (!command) {
     throw new Error(`Command is missing. Must be one of [${Object.keys(commands).join(',')}]`)
 }
@@ -73,10 +74,10 @@ if (!commands[command]) {
 
 if (command !== 'help' && 'help' in processArguments()) {
     apiHelp[command]()
-    return
-}
+} else {
 
-const configVerification = command === 'init' ? Promise.resolve() : verifyConfig()
-configVerification.then(() =>
-    commands[command]().then(() => console.log(command, 'finished successfully'))
-)
+    const configVerification = command === 'init' ? Promise.resolve() : verifyConfig()
+    configVerification.then(() =>
+        commands[command]().then(() => console.log(command, 'finished successfully'))
+    )
+}

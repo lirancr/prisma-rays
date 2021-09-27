@@ -1,7 +1,8 @@
-const {PrismaClient} = require("@prisma/client")
-const {verbose, databaseUrl, databaseEngine} = require("./config")
-const { prismaSync } = require('./cmd')
-const prisma = new PrismaClient({
+import {PrismaClient} from "@prisma/client"
+import {verbose, databaseUrl, databaseEngine} from "./config"
+import { prismaSync } from './cmd'
+
+export const prisma = new PrismaClient({
     log: verbose ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
     datasources: {
         db: {
@@ -10,14 +11,14 @@ const prisma = new PrismaClient({
     }
 })
 
-const executeRawOne = (command) => {
-    const rawCommand = [command]
+export const executeRawOne = (command: string): Promise<unknown> => {
+    const rawCommand: any = [command]
     rawCommand.raw = [command]
     return prisma.$executeRaw(rawCommand)
 }
 
-const queryRawOne = (command) => {
-    const rawCommand = [command]
+const queryRawOne = (command: string): Promise<any> => {
+    const rawCommand: any = [command]
     rawCommand.raw = [command]
     return prisma.$queryRaw(rawCommand)
 }
@@ -27,7 +28,7 @@ const queryRawOne = (command) => {
  *
  * @return {Promise<void>}
  */
-const clearMigrationsTable = async () => {
+export const clearMigrationsTable = async (): Promise<void> => {
     try {
         await executeRawOne(databaseEngine.deleteMigrations())
     } catch (e) {}
@@ -39,7 +40,7 @@ const clearMigrationsTable = async () => {
  *
  * @return {Promise<void>}
  */
-const insertMigration = (name) => {
+export const insertMigration = async (name: string): Promise<void> => {
     prismaSync(`migrate resolve --applied ${name}`)
 }
 
@@ -49,8 +50,8 @@ const insertMigration = (name) => {
  *
  * @return {Promise<void>}
  */
-const deleteMigration = (name) => {
-    return executeRawOne(databaseEngine.deleteMigration(name))
+export const deleteMigration = async (name: string): Promise<unknown> => {
+    return executeRawOne(databaseEngine.deleteMigrationsByName(name))
 }
 
 /**
@@ -58,9 +59,9 @@ const deleteMigration = (name) => {
  *
  * @return {Promise<Array<string>>}
  */
-const getAppliedMigrations = async () => {
+export const getAppliedMigrations = async (): Promise<string[]> => {
     const migrations = await queryRawOne(databaseEngine.selectMigrations())
-    return migrations.map(migration => migration.migration_name).sort()
+    return migrations.map((migration: any) => migration.migration_name).sort()
 }
 
 /**
@@ -69,7 +70,7 @@ const getAppliedMigrations = async () => {
  * @param query string
  * @return {Array<string>}
  */
-const splitMultilineQuery = (query) => {
+export const splitMultilineQuery = (query: string): string[] => {
     return query.split('\n')
         // remove comments
         .filter((cmd) => !cmd.startsWith('-- '))
@@ -80,21 +81,10 @@ const splitMultilineQuery = (query) => {
         .map((cmd) => cmd + ';')
 }
 
-const executeRaw = async (query) => {
+export const executeRaw = async (query: string): Promise<unknown> => {
     const commands = splitMultilineQuery(query)
 
     return prisma.$transaction(
-        commands.map(executeRawOne)
+        commands.map(executeRawOne) as any
     )
-}
-
-module.exports = {
-    clearMigrationsTable,
-    insertMigration,
-    deleteMigration,
-    getAppliedMigrations,
-    executeRaw,
-    executeRawOne,
-    splitMultilineQuery,
-    prisma,
 }

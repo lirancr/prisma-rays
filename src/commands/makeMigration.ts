@@ -1,14 +1,20 @@
-const { prismaSync, commandSync } = require('../cmd')
-const { UTF8, SCHEMA_FILE_NAME } = require('../constants')
-const { schema, databaseUrl, databaseUrlEnvVarName, databaseEngine } = require('../config')
-const path = require('path')
-const fs = require('fs')
-const { getMigrationFolders, migrationsPath } = require('../migrationFileUtils')
-const { executeRaw, splitMultilineQuery } = require('../dbcommands')
+import { prismaSync, commandSync } from '../cmd'
+import { UTF8, SCHEMA_FILE_NAME } from '../constants'
+import { schema, databaseUrl, databaseUrlEnvVarName, databaseEngine } from '../config'
+import * as path from 'path'
+import * as fs from 'fs'
+import { getMigrationFolders, migrationsPath } from '../migrationFileUtils'
+import { executeRaw, splitMultilineQuery } from '../dbcommands'
+import type {MakeMigrationCommand} from "../types";
 
+interface IMigrationScriptParams {
+    migrationName: string
+    execUp: string[]
+    execDown: string[]
+}
 
-const generateMigrationScript = ({ migrationName, execUp, execDown}) => {
-    const createExecuteCommands = (arr) => arr
+const generateMigrationScript = ({ migrationName, execUp, execDown}: IMigrationScriptParams): void => {
+    const createExecuteCommands = (arr: string[]) => arr
         .map((cmd) => cmd.replace(/`/g, '\\`'))
         .map((cmd) => `await prisma.$executeRaw\`${cmd}\`;`)
         .join('\n')
@@ -30,10 +36,10 @@ const generateMigrationScript = ({ migrationName, execUp, execDown}) => {
  * @param blank allow creation of a blank migration if no changes are detected
  * @return {Promise<string|null>} the full name of the newly created migration
  */
-module.exports = async (name, blank = false) => {
+const command: MakeMigrationCommand = async (name: string, blank = false): Promise<string|null> => {
     // prepare sterile environment for migration generating
-    const dbName = databaseUrl.match(/postgresql:\/\/.+:.+@.+:[0-9]+\/([^?]+)\??.+/).pop()
-    const shadowDbName = `${dbName}_shadow_${name}_${Date.now()}`
+    const dbName = databaseUrl.match(/postgresql:\/\/.+:.+@.+:[0-9]+\/([^?]+)\??.+/)!.pop()
+    const shadowDbName: string = `${dbName}_shadow_${name}_${Date.now()}`
 
     const shadowEnv = {
         [databaseUrlEnvVarName]: databaseUrl
@@ -56,7 +62,7 @@ module.exports = async (name, blank = false) => {
             return null
         }
 
-        const migrationFileParams = {
+        const migrationFileParams: IMigrationScriptParams = {
             migrationName: newMigration,
             execUp: [],
             execDown: [],
@@ -89,7 +95,7 @@ module.exports = async (name, blank = false) => {
             console.log('Creating down migration')
             prismaSync(`migrate dev --create-only --skip-seed --skip-generate --name revert`, shadowEnv)
 
-            const revertMigration = getMigrationFolders().pop()
+            const revertMigration = getMigrationFolders().pop()!
 
             migrationFileParams.execDown = splitMultilineQuery(fs.readFileSync(path.join(migrationsPath, revertMigration, 'migration.sql'), UTF8))
 
@@ -108,3 +114,5 @@ module.exports = async (name, blank = false) => {
         executeRaw(databaseEngine.dropDatabaseIfExists(shadowDbName))
     }
 }
+
+export default command
