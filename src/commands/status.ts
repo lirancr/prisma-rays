@@ -11,3 +11,4 @@ const command: StatusCommand = async (): Promise<void> => {
 }
 
 export default command
+module.exports = command

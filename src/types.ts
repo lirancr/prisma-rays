@@ -26,5 +26,5 @@ export interface IMigrationScript {
 export type InitCommand = () => Promise<void>
 export type MakeMigrationCommand = (name: string, blank?: boolean) => Promise<string|null>
 export type MigrateCommand = (arg?: { name?: string, fake?: boolean }) => Promise<void>
-export type PrepareCommand = () => Promise<void>
+export type PrepareCommand = (approveReset: boolean) => Promise<void>
 export type StatusCommand = () => Promise<void>

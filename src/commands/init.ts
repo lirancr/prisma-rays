@@ -1,8 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { DEFAULT_CONFIG_FILE_NAME } from '../constants'
-import type
-{InitCommand} from "../types";
+import type {InitCommand} from "../types"
 
 const command: InitCommand = async () => {
     console.log('Setting up Prisma Lens for your project')
@@ -18,3 +17,4 @@ const command: InitCommand = async () => {
 }
 
 export default command
+module.exports = command

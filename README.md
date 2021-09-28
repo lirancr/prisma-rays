@@ -64,7 +64,13 @@ init is only ever required once in the entire lifespan of a project
 
 #### prepare
 
-`npx plens prepare`
+`npx plens prepare <options>`
+
+Options:
+
+Option | Values | Required | description
+--- | --- | --- | ---
+y | None | No | approve database reset
 
 Initialize the migration system against the current existing database.
 Using this function require to clear the database during the process.
@@ -74,6 +80,9 @@ if you have an existing prisma schema you wish to end up with run `npx prisma db
 
 Prepare is only ever required once in the entire lifespan of a project
 
+**example usage:**
+
+`npx plens prepare --y`
 
 #### makemigration
 

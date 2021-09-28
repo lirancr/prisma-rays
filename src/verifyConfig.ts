@@ -14,11 +14,6 @@ const verifyMigrationsDir = ({ migrationsDir }: LensConfig) => {
 	if (!migrationsDir) {
 		configError('Missing config value for migrationsDir')
 	}
-
-	const resolved = path.resolve(migrationsDir)
-	if (!fs.existsSync(resolved)) {
-		configError('Bad migrationsDir value, directory doesn\'t exists: '+resolved)
-	}
 }
 
 const verifySchemaPath = ({ schemaPath }: LensConfig) => {

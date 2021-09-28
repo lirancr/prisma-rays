@@ -15,7 +15,7 @@ export const prismaSync = (cmd: string, env: object = {}): unknown => {
 		[databaseUrlEnvVarName]: databaseUrl,
 	}
 
-	return execa.commandSync(`npx prisma ${cmd} --schema ${schema}`, {
+	return execa.commandSync(`npx --yes prisma ${cmd} --schema ${schema}`, {
 		stderr: 'inherit',
 		stdout: 'inherit',
 		stdin: 'inherit',

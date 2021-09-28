@@ -93,3 +93,4 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
 }
 
 export default command
+module.exports = command

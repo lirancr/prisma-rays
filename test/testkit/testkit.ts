@@ -1,17 +1,28 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import execa from 'execa'
-import {ChildProcess} from "child_process";
+import {UTF8} from "../../src/constants";
+import { PrismaClient } from '@prisma/client'
 
 const testProjectPath = path.join(__dirname, '..', 'test-project')
 
 type TestFunction = (testkit: {
-    plens: (cmd: string) => ChildProcess,
+    exec: (cmd: string, options?: execa.Options) => execa.ExecaChildProcess<string>,
+    plens: (cmd: string) => execa.ExecaChildProcess<string>,
     setSchema: (modelsSchema: string) => string,
     testProjectPath: string,
+    prismaClientProvider: () => PrismaClient,
 }) => Promise<unknown>
 
-export const plens = (cmd: string) => execa(`npx plens ${cmd}`)
+const exec = (cmd: string, options: execa.Options = {}) => execa.command(cmd, {
+    cwd: testProjectPath,
+    stderr: 'inherit',
+    stdout: 'inherit',
+    stdin: 'inherit',
+    ...options
+})
+
+export const plens = (cmd: string) => exec(`npx plens ${cmd}`)
 
 export const setSchema = (modelsSchema: string): string => {
 
@@ -41,31 +52,70 @@ const setEnv = (env: { [k: string]: string} ): string => {
     return envData
 }
 
-const defaultEnv = {
-    DATABASE_URL: "postgresql://postgres:root@localhost:5432/plenstest?schema=public"
+type TestKitOptions = {
+    init: boolean
+    prepare: boolean,
+    env: { [k: string]: string},
+}
+
+const defaultTestkitOptions: TestKitOptions = {
+    init: true,
+    prepare: true,
+    env: {
+        DATABASE_URL: "postgresql://postgres:root@localhost:5432/plenstest?schema=public"
+    },
 }
 
 export const withSchema = (
-    options: {
-        schema: string,
-        env?: { [k: string]: string },
-        dontInit?: boolean
-    },
+    _options: { schema: string} & Partial<TestKitOptions>,
     testFn: TestFunction
-): () => ReturnType<TestFunction> => {
-    setEnv(options.env || defaultEnv)
-    setSchema(options.schema)
+) => {
+    return async (): Promise<unknown> => {
 
-    // delete previously created config file
-    const configFilePath = path.join(testProjectPath, 'lensconfig.js')
-    if (fs.existsSync(configFilePath)) {
-        fs.rmSync(configFilePath)
+        const testOptions: TestKitOptions = {
+            ...defaultTestkitOptions,
+            ..._options
+        }
+
+        setEnv(testOptions.env)
+        setSchema(_options.schema)
+
+        // delete previously created config file
+        const configFilePath = path.join(testProjectPath, 'lensconfig.js')
+        if (fs.existsSync(configFilePath)) {
+            fs.rmSync(configFilePath)
+        }
+
+        if (testOptions.init) {
+            await plens('init')
+
+            // set database url for test
+            fs.writeFileSync(configFilePath, fs.readFileSync(configFilePath, UTF8)
+                .replace(
+                `databaseUrl: 'postgresql://postgres:username@dbhost:port/dbname?schema=public',`,
+                `databaseUrl: '${testOptions.env.DATABASE_URL}',`))
+
+            if (testOptions.prepare) {
+                const migrationsDirPath = path.join(testProjectPath, 'prisma', 'migrations')
+                if (fs.existsSync(migrationsDirPath)) {
+                    fs.rmdirSync(migrationsDirPath, {recursive: true})
+                }
+
+                await exec(`npx prisma db push`)
+                await plens('prepare --y')
+            }
+        }
+
+        const prismaClientProvider = () => new PrismaClient({
+            log: ['warn', 'error'],
+            datasources: {
+                db: {
+                    url: testOptions.env.DATABASE_URL
+                }
+            }
+        })
+
+        return testFn({plens, setSchema, testProjectPath, prismaClientProvider, exec})
     }
-
-    if (!options.dontInit) {
-        plens('init')
-    }
-
-    return () => testFn({ plens, setSchema, testProjectPath })
 }
 

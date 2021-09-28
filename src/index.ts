@@ -36,7 +36,8 @@ const commands: { [name: string]: () => Promise<unknown> } = {
         return (require('./commands/init') as InitCommand)()
     },
     prepare: async () => {
-        return (require('./commands/prepare') as PrepareCommand)()
+        const args = processArguments()
+        return (require('./commands/prepare') as PrepareCommand)('y' in args)
     },
     makemigration: async () => {
         const args = processArguments('name')
@@ -75,9 +76,14 @@ if (!commands[command]) {
 if (command !== 'help' && 'help' in processArguments()) {
     apiHelp[command]()
 } else {
-
     const configVerification = command === 'init' ? Promise.resolve() : verifyConfig()
-    configVerification.then(() =>
-        commands[command]().then(() => console.log(command, 'finished successfully'))
-    )
+
+    configVerification.then(() => {
+        return commands[command]()
+    }).then(() => {
+        console.log(command, 'finished successfully')
+    }).catch((e) => {
+        process.on('exit', () => console.error(e))
+        process.exit(1)
+    })
 }

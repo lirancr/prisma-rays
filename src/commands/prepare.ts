@@ -9,13 +9,13 @@ import type {PrepareCommand} from "../types";
  *
  * @return {Promise<void>}
  */
-const command: PrepareCommand = async (): Promise<void> => {
+const command: PrepareCommand = async (approveReset): Promise<void> => {
     // make sure we dont have existing migrations
     if (getMigrationFolders().length > 0) {
         throw new Error('Project already initialized (migrations folder is not empty)')
     }
 
-    if (await ask('Initializing the database will require dropping all the data from it. Continue? (y/n): ') !== 'y') {
+    if (!approveReset && await ask('Initializing the database will require dropping all the data from it. Continue? (y/n): ') !== 'y') {
         console.log('aborting')
         return
     }
@@ -32,3 +32,4 @@ const command: PrepareCommand = async (): Promise<void> => {
 }
 
 export default command
+module.exports = command
