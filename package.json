@@ -17,7 +17,7 @@
     "plens": "./bin/client.js"
   },
   "engines": {
-    "node": "14.17.x"
+    "node": "14.18.x"
   },
   "author": "lirancr",
   "license": "ISC",
