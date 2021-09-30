@@ -59,6 +59,10 @@ const setSchema = (modelsSchema: string): string => {
     
     ${modelsSchema}
     `
+    if (!fs.existsSync(path.join(testProjectPath, 'prisma'))) {
+        fs.mkdirSync(path.join(testProjectPath, 'prisma'))
+    }
+
     fs.writeFileSync(schemaPath, schema)
 
     return schema
