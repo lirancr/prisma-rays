@@ -1,8 +1,11 @@
 import {QueryBuilderFactory} from "../types";
 
 const factory: QueryBuilderFactory = (databaseUrl: string) => {
-	const matches = /postgresql:\/\/.+:.+@.+:[0-9]+\/[^?]+(?:\?schema=(.+))?/g.exec(databaseUrl)!
-	const schema = matches[1] || 'public'
+	const matches = /postgresql:\/\/.+:.+@.+:[0-9]+\/[^?]+(?:\?schema=(.+))?/g.exec(databaseUrl)
+	if (!matches) {
+		throw new Error(`Invalid database url for postgres: ${databaseUrl}`)
+	}
+	const schema = matches![1] || 'public'
 
 	return {
 		deleteAllFrom: (table) => `DELETE FROM ${schema}."${table}";`,
