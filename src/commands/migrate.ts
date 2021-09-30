@@ -2,7 +2,7 @@ import { getMigrationFolders } from "../migrationFileUtils";
 import { getAppliedMigrations, insertMigration, deleteMigration, executeRawOne, prisma } from '../dbcommands'
 import { prismaSync } from "../cmd";
 import { SCHEMA_FILE_NAME } from '../constants'
-import {schema, migrationsPath, databaseEngine} from "../config";
+import {schema, migrationsPath, queryBuilder} from "../config";
 import * as path from 'path';
 import * as  fs from 'fs';
 import type {IMigrationScript, MigrateCommand} from "../types";
@@ -64,12 +64,12 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
         if (!fake) {
             const migrationCommand = migrateUp ? migrationScript.up : migrationScript.down
             try {
-                await executeRawOne(databaseEngine.transactionBegin())
+                await executeRawOne(queryBuilder.transactionBegin())
                 await migrationCommand({ prisma })
-                await executeRawOne(databaseEngine.transactionCommit())
+                await executeRawOne(queryBuilder.transactionCommit())
 
             } catch (e) {
-                await executeRawOne(databaseEngine.transactionRollback())
+                await executeRawOne(queryBuilder.transactionRollback())
                 throw e
             }
         }

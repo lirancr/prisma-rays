@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import {getMigrationsDirs, verifyMigrationFiles, withSchema} from "./testkit/testkit"
-import {UTF8} from "../src/constants";
+import {PRISMA_MIGRATIONS_TABLE, UTF8} from "../src/constants";
 
 const schema = `
 model User {
@@ -26,12 +26,11 @@ model User {
 
 describe('MakeMigration', () => {
     test('Create single migration file', withSchema({schema},
-        async ({plens, topology: {migrationsDir, schema}, prismaClientProvider, setSchema}) => {
-            const prismaClient = prismaClientProvider()
+        async ({plens, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder}) => {
 
-            await prismaClient.$executeRaw`INSERT INTO public."User" (firstname) VALUES ('John')`
+            await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
-            expect((await prismaClient.$queryRaw`SELECT * FROM public."User"` as any[])[0]).toEqual({
+            expect((await raw.query(queryBuilder.selectAllFrom('User')) as any[])[0]).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
             })
@@ -54,12 +53,12 @@ describe('MakeMigration', () => {
             expect(currentSchema).toEqual(schemaBackup)
 
             // ensure it's not applied
-            expect((await prismaClient.$queryRaw`SELECT * FROM public."User"` as any[])[0]).toEqual({
+            expect((await raw.query(queryBuilder.selectAllFrom('User')) as any[])[0]).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
             })
 
-            const migrations: any[] = (await prismaClient.$queryRaw`SELECT * FROM public._prisma_migrations` as any[])
+            const migrations: any[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
                 .sort()
             expect(migrations.length).toEqual(1)
@@ -82,12 +81,11 @@ describe('MakeMigration', () => {
         }))
 
     test('Create multiple migration files without applying', withSchema({schema},
-        async ({plens, topology: {migrationsDir, schema}, prismaClientProvider, setSchema}) => {
-            const prismaClient = prismaClientProvider()
+        async ({plens, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder}) => {
 
-            await prismaClient.$executeRaw`INSERT INTO public."User" (firstname) VALUES ('John')`
+            await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
-            expect((await prismaClient.$queryRaw`SELECT * FROM public."User"` as any[])[0]).toEqual({
+            expect((await raw.query(queryBuilder.selectAllFrom('User')) as any[])[0]).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
             })
@@ -117,12 +115,12 @@ describe('MakeMigration', () => {
             expect(currentSchema).toEqual(schemaBackup)
 
             // ensure it's not applied
-            expect((await prismaClient.$queryRaw`SELECT * FROM public."User"` as any[])[0]).toEqual({
+            expect((await raw.query(queryBuilder.selectAllFrom('User')) as any[])[0]).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
             })
 
-            const migrations: any[] = (await prismaClient.$queryRaw`SELECT * FROM public._prisma_migrations` as any[])
+            const migrations: any[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
                 .sort()
             expect(migrations.length).toEqual(1)
@@ -131,7 +129,7 @@ describe('MakeMigration', () => {
         }))
 
     test('Create blank migration file when no changes detected with blank option', withSchema({schema},
-        async ({plens, topology: {migrationsDir, schema}, prismaClientProvider}) => {
+        async ({plens, topology: {migrationsDir, schema}, raw, queryBuilder}) => {
             await plens(`makemigration --name second --blank`)
 
             // ensure migration creation
@@ -151,8 +149,7 @@ describe('MakeMigration', () => {
             expect(blankSQL).toEqual('-- This is an empty migration.')
 
             // ensure it's not applied
-            const prismaClient = prismaClientProvider()
-            const migrations: any[] = (await prismaClient.$queryRaw`SELECT * FROM public._prisma_migrations` as any[])
+            const migrations: any[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
                 .sort()
             expect(migrations.length).toEqual(1)

@@ -1,6 +1,6 @@
 import { prismaSync, commandSync } from '../cmd'
 import { UTF8, SCHEMA_FILE_NAME } from '../constants'
-import { schema, databaseUrl, databaseUrlEnvVarName, databaseEngine } from '../config'
+import { schema, databaseUrl, databaseUrlEnvVarName, queryBuilder } from '../config'
 import * as path from 'path'
 import * as fs from 'fs'
 import { getMigrationFolders, migrationsPath } from '../migrationFileUtils'
@@ -46,8 +46,8 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
             .replace(/(postgresql:\/\/.+:.+@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDbName}$3`)
     }
 
-    await executeRaw(databaseEngine.dropDatabaseIfExists(shadowDbName))
-    await executeRaw(databaseEngine.createDatabase(shadowDbName))
+    await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
+    await executeRaw(queryBuilder.createDatabase(shadowDbName))
 
     try {
         // perform migration
@@ -111,7 +111,7 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
         throw e
     } finally {
         // cleanup
-        executeRaw(databaseEngine.dropDatabaseIfExists(shadowDbName))
+        executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
     }
 }
 

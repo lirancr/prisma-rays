@@ -7,10 +7,11 @@ export interface LensConfig {
     verboseLogging: boolean
 }
 
-export interface IDatabaseEngine {
-    deleteMigrations: () => string
-    deleteMigrationsByName: (name: string) => string
-    selectMigrations: () =>  string
+export interface IQueryBuilder {
+    deleteAllFrom: (table: string) => string
+    deleteFromBy: (table: string, column: string, value: string) => string
+    selectAllFrom: (table: string) =>  string
+    insertInto: (table: string, values: { [column: string]: string }) => string
     dropDatabaseIfExists: (db: string) => string
     createDatabase: (db: string) => string
     transactionBegin: () => string

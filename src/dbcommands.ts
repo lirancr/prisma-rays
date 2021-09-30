@@ -1,6 +1,7 @@
 import {PrismaClient} from "@prisma/client"
-import {verbose, databaseUrl, databaseEngine} from "./config"
+import {verbose, databaseUrl, queryBuilder} from "./config"
 import { prismaSync } from './cmd'
+import { PRISMA_MIGRATIONS_TABLE, PRISMA_MIGRATION_NAME_COL } from "./constants";
 
 export const prisma = new PrismaClient({
     log: verbose ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
@@ -30,7 +31,7 @@ const queryRawOne = (command: string): Promise<any> => {
  */
 export const clearMigrationsTable = async (): Promise<void> => {
     try {
-        await executeRawOne(databaseEngine.deleteMigrations())
+        await executeRawOne(queryBuilder.deleteAllFrom(PRISMA_MIGRATIONS_TABLE))
     } catch (e) {}
 }
 
@@ -51,7 +52,7 @@ export const insertMigration = async (name: string): Promise<void> => {
  * @return {Promise<void>}
  */
 export const deleteMigration = async (name: string): Promise<unknown> => {
-    return executeRawOne(databaseEngine.deleteMigrationsByName(name))
+    return executeRawOne(queryBuilder.deleteFromBy(PRISMA_MIGRATIONS_TABLE, PRISMA_MIGRATION_NAME_COL, name))
 }
 
 /**
@@ -60,8 +61,8 @@ export const deleteMigration = async (name: string): Promise<unknown> => {
  * @return {Promise<Array<string>>}
  */
 export const getAppliedMigrations = async (): Promise<string[]> => {
-    const migrations = await queryRawOne(databaseEngine.selectMigrations())
-    return migrations.map((migration: any) => migration.migration_name).sort()
+    const migrations = await queryRawOne(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE))
+    return migrations.map((migration: any) => migration[PRISMA_MIGRATION_NAME_COL]).sort()
 }
 
 /**

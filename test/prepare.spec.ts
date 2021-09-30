@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import {withSchema} from "./testkit/testkit"
+import {PRISMA_MIGRATIONS_TABLE} from "../src/constants";
 
 const schema = `
 model Post {
@@ -32,21 +33,20 @@ model User {
 describe('Prepare', () => {
 
     test('Create tables, migration & run migration', withSchema({ schema, prepare: false },
-        async ({ plens, topology: { migrationsDir }, prismaClientProvider, exec }) => {
+        async ({ plens, topology: { migrationsDir }, exec, raw, queryBuilder }) => {
             if (fs.existsSync(migrationsDir)) {
                 fs.rmdirSync(migrationsDir, {recursive: true})
             }
 
             await exec(`npx prisma db push --force-reset --accept-data-loss --skip-generate`)
             await plens('prepare --y')
-            const prismaClient = prismaClientProvider()
 
             // create tables
-            expect(await prismaClient.$queryRaw`SELECT * FROM public."Post"`).toEqual([])
-            expect(await prismaClient.$queryRaw`SELECT * FROM public."User"`).toEqual([])
-            expect(await prismaClient.$queryRaw`SELECT * FROM public."Profile"`).toEqual([])
+            expect(await raw.query(queryBuilder.selectAllFrom('Post'))).toEqual([])
+            expect(await raw.query(queryBuilder.selectAllFrom('User'))).toEqual([])
+            expect(await raw.query(queryBuilder.selectAllFrom('Profile'))).toEqual([])
 
-            const migrations: any[] = await prismaClient.$queryRaw`SELECT * FROM public._prisma_migrations`
+            const migrations: any[] = await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE))
             expect(migrations.length).toEqual(1)
             expect(migrations[0].migration_name).toMatch(/[0-9]+_init/)
     }))

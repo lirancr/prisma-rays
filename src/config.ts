@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import processArguments from './processArguments'
-import * as engineProvider from './engineProvider'
+import * as queryBuilderProvider from './queryBuilderProvider'
 import { DEFAULT_CONFIG_FILE_NAME, UTF8 } from './constants'
 import type {LensConfig} from "./types";
 
@@ -26,6 +26,6 @@ export const schema = path.resolve(schemaPath)
 const schemaFile = fs.readFileSync(schema, UTF8)
 
 export const databaseUrlEnvVarName = getDatabaseUrlEnvVarNameFromSchema(schemaFile)!
-export const databaseEngine = engineProvider.engineFor(getDatabaseEngineFromSchema(schemaFile)!)!
+export const queryBuilder = queryBuilderProvider.builderFor(getDatabaseEngineFromSchema(schemaFile)!)!
 export const migrationsPath =  path.resolve(migrationsDir)
 export { databaseUrl }

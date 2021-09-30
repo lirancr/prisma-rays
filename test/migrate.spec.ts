@@ -1,8 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import {getMigrationsDirs, TestFunction, withSchema} from "./testkit/testkit"
-import type {PrismaClient} from "@prisma/client";
-import {UTF8} from "../src/constants";
+import {PRISMA_MIGRATIONS_TABLE, UTF8} from "../src/constants";
 
 const schema = `
 model User {
@@ -25,9 +24,8 @@ model User {
   initials      String? @default("JD")
 }`
 
-const prepareTestEnvironment: TestFunction = async ({ prismaClientProvider, setSchema, plens }) => {
-    const prismaClient = prismaClientProvider()
-    await prismaClient.$executeRaw`INSERT INTO public."User" (firstname) VALUES ('John')`
+const prepareTestEnvironment = async ({ setSchema, plens, raw, queryBuilder }: Parameters<TestFunction>[0]) => {
+    await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
     setSchema(updatedSchema)
     await plens('makemigration --name second')
@@ -36,16 +34,15 @@ const prepareTestEnvironment: TestFunction = async ({ prismaClientProvider, setS
     await plens('makemigration --name third')
 }
 
-const getUserRecord = async (prismaClientProvider: () => PrismaClient) => {
-    const prismaClient = prismaClientProvider()
-    return (await prismaClient.$queryRaw`SELECT * FROM public."User"` as any[])[0]
+const getUserRecord = async ({ raw, queryBuilder }: Parameters<TestFunction>[0]) => {
+    return (await raw.query(queryBuilder.selectAllFrom('User')) as any[])[0]
 }
 
 describe('Migrate', () => {
     test('Migrate to top', withSchema({ schema },
         async (args) => {
             await prepareTestEnvironment(args)
-            const { plens, prismaClientProvider, topology: { migrationsDir, schema } } = args
+            const { plens, topology: { migrationsDir, schema }, raw, queryBuilder } = args
 
             await plens('migrate')
 
@@ -56,12 +53,12 @@ describe('Migrate', () => {
             const migrationSchema = fs.readFileSync(path.join(migrationsDir, migrations[migrations.length - 1], 'migration.schema.prisma'), UTF8)
             expect(currentSchema).toEqual(migrationSchema)
 
-            const appliedMigrations: string[] = (await prismaClientProvider().$queryRaw`SELECT * FROM public._prisma_migrations` as any[])
+            const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
 
             expect(appliedMigrations).toEqual(migrations)
 
-            expect(await getUserRecord(prismaClientProvider)).toEqual({
+            expect(await getUserRecord(args)).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
                 lastname: 'Doe',
@@ -72,7 +69,7 @@ describe('Migrate', () => {
     test('Migrate up to name', withSchema({ schema },
         async (args) => {
             await prepareTestEnvironment(args)
-            const { plens, prismaClientProvider, topology: { migrationsDir, schema } } = args
+            const { plens, topology: { migrationsDir, schema }, raw, queryBuilder } = args
 
             const migrations = getMigrationsDirs()
 
@@ -83,12 +80,12 @@ describe('Migrate', () => {
             const migrationSchema = fs.readFileSync(path.join(migrationsDir, migrations[1], 'migration.schema.prisma'), UTF8)
             expect(currentSchema).toEqual(migrationSchema)
 
-            const appliedMigrations: string[] = (await prismaClientProvider().$queryRaw`SELECT * FROM public._prisma_migrations` as any[])
+            const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
 
             expect(appliedMigrations).toEqual(migrations.slice(0, 2))
 
-            expect(await getUserRecord(prismaClientProvider)).toEqual({
+            expect(await getUserRecord(args)).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
                 lastname: 'Doe',
@@ -98,11 +95,11 @@ describe('Migrate', () => {
     test('Migrate down to name', withSchema({ schema },
         async (args) => {
             await prepareTestEnvironment(args)
-            const { plens, prismaClientProvider, topology: { migrationsDir, schema } } = args
+            const { plens, topology: { migrationsDir, schema }, raw, queryBuilder } = args
 
             await plens(`migrate`)
 
-            expect(await getUserRecord(prismaClientProvider)).toEqual({
+            expect(await getUserRecord(args)).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
                 lastname: 'Doe',
@@ -118,12 +115,12 @@ describe('Migrate', () => {
             const migrationSchema = fs.readFileSync(path.join(migrationsDir, migrations[1], 'migration.schema.prisma'), UTF8)
             expect(currentSchema).toEqual(migrationSchema)
 
-            const appliedMigrations: string[] = (await prismaClientProvider().$queryRaw`SELECT * FROM public._prisma_migrations` as any[])
+            const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
 
             expect(appliedMigrations).toEqual(migrations.slice(0, 2))
 
-            expect(await getUserRecord(prismaClientProvider)).toEqual({
+            expect(await getUserRecord(args)).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
                 lastname: 'Doe',
@@ -133,7 +130,7 @@ describe('Migrate', () => {
     test('Fake migration', withSchema({ schema },
         async (args) => {
             await prepareTestEnvironment(args)
-            const { plens, prismaClientProvider, topology: { migrationsDir, schema } } = args
+            const { plens, topology: { migrationsDir, schema }, raw, queryBuilder } = args
 
             await plens('migrate --fake')
 
@@ -144,12 +141,12 @@ describe('Migrate', () => {
             const migrationSchema = fs.readFileSync(path.join(migrationsDir, migrations[migrations.length - 1], 'migration.schema.prisma'), UTF8)
             expect(currentSchema).toEqual(migrationSchema)
 
-            const appliedMigrations: string[] = (await prismaClientProvider().$queryRaw`SELECT * FROM public._prisma_migrations` as any[])
+            const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
 
             expect(appliedMigrations).toEqual(migrations)
 
-            expect(await getUserRecord(prismaClientProvider)).toEqual({
+            expect(await getUserRecord(args)).toEqual({
                 id: expect.any(Number),
                 firstname: 'John',
             })

@@ -1,8 +1,10 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import execa from 'execa'
+import * as queryBuilderProvider from '../../src/queryBuilderProvider'
 import {UTF8} from "../../src/constants";
 import { PrismaClient } from '@prisma/client'
+import type {IQueryBuilder} from "../../src/types";
 
 const testProjectPath = path.join(__dirname, '..', 'test-project')
 
@@ -23,7 +25,11 @@ export type TestFunction = (testkit: {
         schema: string,
         lensconfig: string,
     },
-    prismaClientProvider: () => PrismaClient,
+    queryBuilder: IQueryBuilder,
+    raw: {
+        query: (query: string) => Promise<any>,
+        execute: (query: string) => Promise<any>
+    }
 }) => Promise<unknown>
 
 const exec = async (cmd: string, options: execa.Options = {}) => {
@@ -117,6 +123,8 @@ export const withSchema = (
             }
         }
 
+        const queryBuilder = queryBuilderProvider.builderFor('postgresql')
+
         const prismaClientProvider = () => {
             return new PrismaClient({
                 log: ['warn', 'error'],
@@ -128,7 +136,25 @@ export const withSchema = (
             })
         }
 
-        return testFn({plens, setSchema, topology, prismaClientProvider, exec})
+        return testFn({
+            plens,
+            setSchema,
+            topology,
+            exec,
+            queryBuilder,
+            raw: {
+                query: (command: string): Promise<any> => {
+                    const rawCommand: any = [command]
+                    rawCommand.raw = [command]
+                    return prismaClientProvider().$queryRaw(rawCommand)
+                },
+                execute: (command: string): Promise<any> => {
+                    const rawCommand: any = [command]
+                    rawCommand.raw = [command]
+                    return prismaClientProvider().$executeRaw(rawCommand)
+                }
+            }
+        })
     }
 }
 
