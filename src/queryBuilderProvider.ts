@@ -18,7 +18,7 @@ type BuildersMap = { [provider: string]: IQueryBuilder}
 const enginesDir: string = path.join(__dirname, 'queryBuilders')
 
 const engines: BuildersMap = fs.readdirSync(enginesDir).reduce((agg: BuildersMap, file: string) => {
-	const provider = file.split('.js')[0]
+	const provider = file.split('.')[0]
 	if (ALLOWED_ENGINES.includes(provider)) {
 		agg[provider] = require(path.join(enginesDir, provider))
 	} else {

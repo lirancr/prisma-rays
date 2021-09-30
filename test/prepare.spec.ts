@@ -1,4 +1,5 @@
 import * as fs from 'fs'
+import * as path from 'path'
 import {withSchema} from "./testkit/testkit"
 import {PRISMA_MIGRATIONS_TABLE} from "../src/constants";
 
@@ -53,6 +54,11 @@ describe('Prepare', () => {
 
     test('Fail if migrations dir not empty', withSchema({ schema, prepare: false },
         async ({ plens, topology: { migrationsDir }, exec }) => {
+            if (!fs.existsSync(migrationsDir)) {
+                fs.mkdirSync(migrationsDir)
+                fs.mkdirSync(path.join(migrationsDir, 'dummy_migration'))
+            }
+
             expect(fs.existsSync(migrationsDir)).toEqual(true)
             expect(fs.readdirSync(migrationsDir).length).toBeGreaterThanOrEqual(1)
 
