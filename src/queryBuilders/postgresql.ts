@@ -9,7 +9,7 @@ const factory: QueryBuilderFactory = (databaseUrl: string) => {
 
 	return {
 		deleteAllFrom: (table) => `DELETE FROM ${schema}."${table}";`,
-			deleteFromBy: (table, column, value) => `DELETE FROM ${schema}."${table}" where ${column}='${value}';`,
+		deleteFromBy: (table, column, value) => `DELETE FROM ${schema}."${table}" where ${column}='${value}';`,
 		selectAllFrom: (table) => `SELECT * FROM ${schema}."${table}";`,
 		insertInto: (table, values) => {
 			const entries = Object.entries(values)
@@ -20,6 +20,13 @@ const factory: QueryBuilderFactory = (databaseUrl: string) => {
 		transactionBegin: () => `BEGIN;`,
 		transactionCommit: () => `COMMIT;`,
 		transactionRollback: () => `ROLLBACK;`,
+		dropAllTables: () => `DO $$ DECLARE
+  								r RECORD;
+						    BEGIN
+    							FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
+    							EXECUTE 'DROP TABLE ' || quote_ident(r.tablename) || ' CASCADE';
+  							END LOOP;
+							END $$;`
 	}
 }
 

@@ -1,10 +1,10 @@
 import { prismaSync, commandSync } from '../cmd'
 import { UTF8, SCHEMA_FILE_NAME } from '../constants'
-import { schema, databaseUrl, databaseUrlEnvVarName, queryBuilder } from '../config'
+import { schema, databaseUrl, shadowDatabaseName, databaseUrlEnvVarName, queryBuilder } from '../config'
 import * as path from 'path'
 import * as fs from 'fs'
 import { getMigrationFolders, migrationsPath } from '../migrationFileUtils'
-import { executeRaw, splitMultilineQuery } from '../dbcommands'
+import {dropAllTables, executeRaw, splitMultilineQuery} from '../dbcommands'
 import type {MakeMigrationCommand} from "../types";
 
 interface IMigrationScriptParams {
@@ -38,16 +38,33 @@ const generateMigrationScript = ({ migrationName, execUp, execDown}: IMigrationS
  */
 const command: MakeMigrationCommand = async (name: string, blank = false): Promise<string|null> => {
     // prepare sterile environment for migration generating
-    const dbName = databaseUrl.match(/postgresql:\/\/.+:.+@.+:[0-9]+\/([^?]+)\??.+/)!.pop()
-    const shadowDbName: string = `${dbName}_shadow_${name}_${Date.now()}`
+    const isShadowDatabaseConfigured = shadowDatabaseName!!
+
+    const dbName = databaseUrl.match(/postgresql:\/\/.+:.+@.+:[0-9]+\/([^?]+)\??.+/)!.pop()!
+    const shadowDbName: string = isShadowDatabaseConfigured
+        ? shadowDatabaseName!
+        : `${dbName}_shadow_${name}_${Date.now()}`
+    const shadowDbUrl = databaseUrl
+        .replace(/(postgresql:\/\/.+:.+@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDbName}$3`)
 
     const shadowEnv = {
-        [databaseUrlEnvVarName]: databaseUrl
-            .replace(/(postgresql:\/\/.+:.+@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDbName}$3`)
+        [databaseUrlEnvVarName]: shadowDbUrl
     }
 
-    await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
-    await executeRaw(queryBuilder.createDatabase(shadowDbName))
+    if (isShadowDatabaseConfigured) {
+        await dropAllTables(shadowDbUrl)
+    } else {
+        await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
+        await executeRaw(queryBuilder.createDatabase(shadowDbName))
+    }
+
+    const cleanup = async () => {
+        if (isShadowDatabaseConfigured) {
+            await dropAllTables(shadowDbUrl)
+        } else {
+            await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
+        }
+    }
 
     try {
         // perform migration
@@ -106,12 +123,12 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
 
         generateMigrationScript(migrationFileParams)
 
+        await cleanup()
+
         return newMigration
     } catch (e) {
+        await cleanup()
         throw e
-    } finally {
-        // cleanup
-        executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
     }
 }
 

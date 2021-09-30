@@ -23,7 +23,7 @@ Prisma Lens is heavily inspired by the UX given by the [Django](https://www.djan
 - [prisma client](https://www.prisma.io/docs/getting-started/setup-prisma/start-from-scratch/relational-databases/install-prisma-client-typescript-postgres) installed on your project
 - existing postgres database (other [relational databases](https://www.prisma.io/docs/reference/database-reference/supported-databases) might also be supported but were not tested against at the moment)
 - `prisma.schema` file with database connection url provided from `.env` file
-- user credentials to the database with the [appropriate permissions](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#shadow-database-user-permissions) for shadow database creation
+- if using the auto-generated shadow database, your user credentials to the database should have the [appropriate permissions](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#shadow-database-user-permissions) for shadow database creation
 
 #### Installation
 
@@ -31,7 +31,7 @@ Prisma Lens is heavily inspired by the UX given by the [Django](https://www.djan
 
    You may also install as global package instead of using `npx`
 2. in your project's root directory run `npx plens init`
-3. Open the generated `lensconfig.js` file and update it according to your project's setup.
+3. Open the generated `lensconfig.js` file and update it according to your project's setup (see [Configuration](#configuration) section for details).
 
 If your project does not have existing migrations created from `prisma migrate` you can opt in to `prisma lens`
 by running `npx plens prepare`. Otherwise, see [Adding to existing projects](#adding-to-existing-projects)
@@ -42,6 +42,68 @@ by running `npx plens prepare`. Otherwise, see [Adding to existing projects](#ad
 2. remove all folders in your migrations directory, only keep the `migration_lock.toml` file.
 3. run `npx plens prepare`
 
+
+## Configuration
+
+Prisma Lens has a single configuration file `lensconfig.js`
+
+#### Configuration options
+
+Option | Values | description
+--- | --- | ---
+migrationsDir | string | A path to your prisma migrations directory
+schemaPath | string | A path to your prisma schema file
+databaseUrl | string | A connection url to your database (this is the same as value set in your `.env` file)
+shadowDatabaseName | string / null | The name of your shadow database if you wish to use predefined one instead of auto-create on each make-migration process. Must be accessible using the same credentials and schema as your database
+verboseLogging | boolean | Whether to enable verbose logging by default (instead of requiring `--log` flag)
+
+#### Basic configuration
+
+For most setups you only need to set your `migrationsDir` and  `schemaPath` and `databaseUrl`.
+
+#### Configuring to work with cloud hosted / fixed shadow database
+
+Prisma Lens (and the underlying Prisma Migrate) uses shadow database to generate migration files based on schema changes without affecting your database.
+Using Prisma Lens require 2 separate shadow databases - one for prisma lens and another for prisma migrate.
+With the basic configuration those databases are automatically created and dropped when creating migrations.
+
+There are however, cases where you might what to override this behaviour and specify your own shadow databases:
+- You don't have the appropriate permissions to create and drop databases.
+- Your database is hosted on a cloud service (which does not normally support creating and dropping database instances)
+- You use PrismaLens migration generating in your CI system (for example Prisma Lens tests run on CI)
+
+It's important to note that shadow databases only play a role when creating migrations (as part of `prepare` or `makemigration`).
+if you only need apply/revert migrations you do not need this special setup.
+
+When overriding the the shadow database behavior, instead of creating and dropping the shadow database, both Prisma Lens and Prisma Migrate
+simply drop all the tables in them and reuse them.
+
+*Configuration*
+
+1. In your `lensconfig.js` file update the `shadowDatabaseName` property to match the name of your shadow database to be used by prisma lens.
+
+   This database must be accessible using the same credentials as your database. For example:
+   ```
+   databaseUrl='postgresql://user:password@dbhost:5432/mydb?schema=public'`
+   shadowDatabaseName='mydb_plens_shadow'`
+   ```
+
+   Shadow database url will be: `postgresql://user:password@dbhost:5432/mydb_plens_shadow?schema=public`
+
+
+2. configure shadow database for Prisma Migrate by setting `shadowDatabaseUrl` in your schema. read more on [prisma migrate docs](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#cloud-hosted-shadow-databases-must-be-created-manually)
+
+   ```
+   datasource db {
+      provider          = "postgresql"
+      url               = "postgresql://user:password@dbhost:5432/mydb?schema=public"
+      shadowDatabaseUrl = "postgresql://user:password@dbhost:5432/mydb_prisma_shadow?schema=public"
+   }
+   ```
+
+   This database must be different from shadow database set for prisma lens
+
+
 ## Usage
 
 Optional global cli options with any command:
@@ -49,7 +111,7 @@ Optional global cli options with any command:
 Option | Values | description
 --- | --- | ---
 log | None | Run command with verbose logging.
-conf | File path | path to your plensconfig file.
+conf | File path | path to your lensconfig file.
 help | None | prints the help chapter on the specific command.
 
 ### Commands
@@ -228,15 +290,6 @@ a migration.
 `prisma lens` can apply as many migration steps as you wish in both directions to bring your database to the desired state. Each migration step is being run inside a transaction and is being rolled back on errors
 
 ## Known limits and missing features
-
-#### Shadow database override
-
-Currently, there is no support for specifying shadow database url, the database name is randomly assigned 
-and the same credentials and host are used as the source database.
-
-As such, using Prisma Lens for generating migrations against cloud hosted shadow databases is not supported.
-
-It is entirely supported to perform migrations (i.e `npx plens migrate`) on cloud hosted databases. Just not using `makemigrations` command with them.
 
 #### So many logs
 

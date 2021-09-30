@@ -63,6 +63,28 @@ const verifyDatabaseUrl = async ({ databaseUrl }: LensConfig) => {
 	}
 }
 
+const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: LensConfig) => {
+	if (!shadowDatabaseName) {
+		return
+	}
+
+	const url = databaseUrl.replace(/(postgresql:\/\/.+:.+@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDatabaseName}$3`)
+
+	const prisma = new PrismaClient({
+		datasources: {
+			db: {
+				url,
+			}
+		}
+	})
+	try {
+		await prisma.$connect()
+		await prisma.$disconnect()
+	} catch (e: any) {
+		configError('Bad shadowDatabaseName value, unable to connect to database:\n' + e.message)
+	}
+}
+
 export default async (): Promise<void> => {
 	const configFilePath = path.resolve(processArguments().conf || DEFAULT_CONFIG_FILE_NAME)
 	if (!fs.existsSync(configFilePath)) {
@@ -74,4 +96,5 @@ export default async (): Promise<void> => {
 	await verifyMigrationsDir(config)
 	await verifySchemaPath(config)
 	await verifyDatabaseUrl(config)
+	await verifyShadowDatabaseName(config)
 }

@@ -4,6 +4,7 @@ export interface LensConfig {
     migrationsDir: string
     schemaPath: string
     databaseUrl: string
+    shadowDatabaseName: string | null
     verboseLogging: boolean
 }
 
@@ -19,6 +20,7 @@ export interface IQueryBuilder {
     transactionBegin: () => string
     transactionCommit: () => string
     transactionRollback: () => string
+    dropAllTables: () => string
 }
 
 export interface IMigrationScript {

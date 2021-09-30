@@ -31,6 +31,7 @@ describe('Init', () => {
                 migrationsDir: expect.any(String),
                 schemaPath: expect.any(String),
                 databaseUrl: expect.any(String),
+                shadowDatabaseName: null,
                 verboseLogging: expect.any(Boolean),
             })
         }))

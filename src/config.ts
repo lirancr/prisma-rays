@@ -11,6 +11,7 @@ const {
     migrationsDir,
     schemaPath,
     databaseUrl,
+    shadowDatabaseName,
     verboseLogging,
 } = require(path.resolve(processArgs.conf || DEFAULT_CONFIG_FILE_NAME)) as LensConfig
 
@@ -28,4 +29,4 @@ const schemaFile = fs.readFileSync(schema, UTF8)
 export const databaseUrlEnvVarName = getDatabaseUrlEnvVarNameFromSchema(schemaFile)!
 export const queryBuilder = queryBuilderProvider.builderFor(getDatabaseEngineFromSchema(schemaFile)!, databaseUrl)!
 export const migrationsPath =  path.resolve(migrationsDir)
-export { databaseUrl }
+export { databaseUrl, shadowDatabaseName }

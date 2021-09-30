@@ -55,6 +55,7 @@ const setSchema = (modelsSchema: string): string => {
     datasource db {
       provider = "postgresql"
       url      = env("DATABASE_URL")
+      shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
     }
     
     ${modelsSchema}
@@ -78,14 +79,16 @@ const setEnv = (env: { [k: string]: string} ): string => {
 type TestKitOptions = {
     init: boolean
     prepare: boolean,
-    env: { [k: string]: string},
+    env: { [k: string]: string },
 }
 
 const defaultTestkitOptions: TestKitOptions = {
     init: true,
     prepare: true,
     env: {
-        DATABASE_URL: "postgresql://postgres:root@localhost:5432/plenstest?schema=public"
+        DATABASE_URL: "postgresql://postgres:root@localhost:5432/plenstest?schema=public",
+        SHADOW_DATABASE_URL: "postgresql://postgres:root@localhost:5432/prisma_shadow?schema=public", // for prisma migrate
+        SHADOW_DATABASE_NAME: "plenstest_shadow" // for prisma lens
     },
 }
 
@@ -114,8 +117,14 @@ export const withSchema = (
             // set database url for test
             fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
                 .replace(
-                `databaseUrl: 'postgresql://postgres:username@dbhost:port/dbname?schema=public',`,
+                /databaseUrl: '.+',/g,
                 `databaseUrl: '${testOptions.env.DATABASE_URL}',`))
+
+            // set shadow database name for test
+            fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
+                .replace(
+                /shadowDatabaseName: .+,/g,
+                    `shadowDatabaseName: '${testOptions.env.SHADOW_DATABASE_NAME}',`))
 
             if (testOptions.prepare) {
                 if (fs.existsSync(topology.migrationsDir)) {

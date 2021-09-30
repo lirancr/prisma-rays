@@ -3,14 +3,16 @@ import {verbose, databaseUrl, queryBuilder} from "./config"
 import { prismaSync } from './cmd'
 import { PRISMA_MIGRATIONS_TABLE, PRISMA_MIGRATION_NAME_COL } from "./constants";
 
-export const prisma = new PrismaClient({
+const createPrismaClient = (url:string): PrismaClient => new PrismaClient({
     log: verbose ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
     datasources: {
         db: {
-            url: databaseUrl
+            url,
         }
     }
 })
+
+export const prisma = createPrismaClient(databaseUrl)
 
 export const executeRawOne = (command: string): Promise<unknown> => {
     const rawCommand: any = [command]
@@ -80,6 +82,17 @@ export const splitMultilineQuery = (query: string): string[] => {
         .map(cmd => cmd.trim())
         .filter((cmd) => cmd)
         .map((cmd) => cmd + ';')
+}
+
+export const dropAllTables = async (databaseUrl: string): Promise<void> => {
+    const client = createPrismaClient(databaseUrl)
+
+    const command = queryBuilder.dropAllTables()
+    const rawCommand: any = [command]
+    rawCommand.raw = [command]
+    await client.$executeRaw(rawCommand)
+
+    await client.$disconnect()
 }
 
 export const executeRaw = async (query: string): Promise<unknown> => {
