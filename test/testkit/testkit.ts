@@ -6,25 +6,38 @@ import { PrismaClient } from '@prisma/client'
 
 const testProjectPath = path.join(__dirname, '..', 'test-project')
 
-type TestFunction = (testkit: {
-    exec: (cmd: string, options?: execa.Options) => execa.ExecaChildProcess<string>,
-    plens: (cmd: string) => execa.ExecaChildProcess<string>,
+const topology = {
+    root: testProjectPath,
+    migrationsDir: path.join(testProjectPath, 'prisma', 'migrations'),
+    schema: path.join(testProjectPath, 'prisma', 'schema.prisma'),
+    lensconfig: path.join(testProjectPath, 'lensconfig.js'),
+}
+
+export type TestFunction = (testkit: {
+    exec: (cmd: string, options?: execa.Options) => Promise<unknown>,
+    plens: (cmd: string) => Promise<unknown>,
     setSchema: (modelsSchema: string) => string,
-    testProjectPath: string,
+    topology: {
+        root: string,
+        migrationsDir: string,
+        schema: string,
+        lensconfig: string,
+    },
     prismaClientProvider: () => PrismaClient,
 }) => Promise<unknown>
 
-const exec = (cmd: string, options: execa.Options = {}) => execa.command(cmd, {
-    cwd: testProjectPath,
-    stderr: 'inherit',
-    stdout: 'inherit',
-    stdin: 'inherit',
-    ...options
-})
+const exec = async (cmd: string, options: execa.Options = {}) => {
+    await execa.command(cmd, {
+        cwd: testProjectPath,
+        stdio: 'inherit',
+        ...options
+    })
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+}
 
-export const plens = (cmd: string) => exec(`npx plens ${cmd}`)
+const plens = (cmd: string) => exec(`npx plens ${cmd}`)
 
-export const setSchema = (modelsSchema: string): string => {
+const setSchema = (modelsSchema: string): string => {
 
     const schemaPath = path.join(testProjectPath, 'prisma', 'schema.prisma')
 
@@ -81,41 +94,55 @@ export const withSchema = (
         setSchema(_options.schema)
 
         // delete previously created config file
-        const configFilePath = path.join(testProjectPath, 'lensconfig.js')
-        if (fs.existsSync(configFilePath)) {
-            fs.rmSync(configFilePath)
+        if (fs.existsSync(topology.lensconfig)) {
+            fs.rmSync(topology.lensconfig)
         }
 
         if (testOptions.init) {
             await plens('init')
 
             // set database url for test
-            fs.writeFileSync(configFilePath, fs.readFileSync(configFilePath, UTF8)
+            fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
                 .replace(
                 `databaseUrl: 'postgresql://postgres:username@dbhost:port/dbname?schema=public',`,
                 `databaseUrl: '${testOptions.env.DATABASE_URL}',`))
 
             if (testOptions.prepare) {
-                const migrationsDirPath = path.join(testProjectPath, 'prisma', 'migrations')
-                if (fs.existsSync(migrationsDirPath)) {
-                    fs.rmdirSync(migrationsDirPath, {recursive: true})
+                if (fs.existsSync(topology.migrationsDir)) {
+                    fs.rmdirSync(topology.migrationsDir, {recursive: true})
                 }
 
-                await exec(`npx prisma db push`)
+                await exec(`npx prisma db push --force-reset --accept-data-loss --skip-generate`)
                 await plens('prepare --y')
             }
         }
 
-        const prismaClientProvider = () => new PrismaClient({
-            log: ['warn', 'error'],
-            datasources: {
-                db: {
-                    url: testOptions.env.DATABASE_URL
+        const prismaClientProvider = () => {
+            return new PrismaClient({
+                log: ['warn', 'error'],
+                datasources: {
+                    db: {
+                        url: testOptions.env.DATABASE_URL
+                    }
                 }
-            }
-        })
+            })
+        }
 
-        return testFn({plens, setSchema, testProjectPath, prismaClientProvider, exec})
+        return testFn({plens, setSchema, topology, prismaClientProvider, exec})
     }
 }
 
+export const verifyMigrationFiles = (name: string) => {
+    expect(fs.existsSync(path.join(topology.migrationsDir, name, 'migration.js'))).toEqual(true)
+    expect(fs.existsSync(path.join(topology.migrationsDir, name, 'migration.schema.prisma'))).toEqual(true)
+    expect(fs.existsSync(path.join(topology.migrationsDir, name, 'migration.sql'))).toEqual(true)
+
+    const migrationScript = require(path.join(topology.migrationsDir, name, 'migration.js'))
+    expect(Object.keys(migrationScript)).toEqual(['up', 'down'])
+}
+
+export const getMigrationsDirs = (): string[] => {
+    return fs.readdirSync(topology.migrationsDir)
+        .filter((migration) => fs.statSync(path.join(topology.migrationsDir, migration)).isDirectory())
+        .sort()
+}

@@ -1,4 +1,3 @@
-import * as path from 'path'
 import * as fs from 'fs'
 import {withSchema} from "./testkit/testkit"
 
@@ -33,12 +32,12 @@ model User {
 describe('Prepare', () => {
 
     test('Create tables, migration & run migration', withSchema({ schema, prepare: false },
-        async ({ plens, testProjectPath, prismaClientProvider, exec }) => {
-            const migrationsDirPath = path.join(testProjectPath, 'prisma', 'migrations')
-            if (fs.existsSync(migrationsDirPath)) {
-                fs.rmdirSync(migrationsDirPath, {recursive: true})
+        async ({ plens, topology: { migrationsDir }, prismaClientProvider, exec }) => {
+            if (fs.existsSync(migrationsDir)) {
+                fs.rmdirSync(migrationsDir, {recursive: true})
             }
-            await exec(`npx prisma db push`)
+
+            await exec(`npx prisma db push --force-reset --accept-data-loss --skip-generate`)
             await plens('prepare --y')
             const prismaClient = prismaClientProvider()
 
@@ -53,11 +52,9 @@ describe('Prepare', () => {
     }))
 
     test('Fail if migrations dir not empty', withSchema({ schema, prepare: false },
-        async ({ plens, testProjectPath, prismaClientProvider, exec }) => {
-            const migrationsDirPath = path.join(testProjectPath, 'prisma', 'migrations')
-
-            expect(fs.existsSync(migrationsDirPath)).toEqual(true)
-            expect(fs.readdirSync(migrationsDirPath).length).toBeGreaterThanOrEqual(1)
+        async ({ plens, topology: { migrationsDir }, exec }) => {
+            expect(fs.existsSync(migrationsDir)).toEqual(true)
+            expect(fs.readdirSync(migrationsDir).length).toBeGreaterThanOrEqual(1)
 
             let failed = false
             await exec(`npx prisma db push`)

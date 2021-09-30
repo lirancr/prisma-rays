@@ -4,9 +4,7 @@ import { createInterface } from 'readline'
 
 export const commandSync = (cmd: string): unknown => {
 		return execa.commandSync(cmd, {
-			stderr: 'inherit',
-			stdout: 'inherit',
-			stdin: 'inherit',
+			stdio: 'inherit',
 		})
 	}
 
@@ -16,9 +14,7 @@ export const prismaSync = (cmd: string, env: object = {}): unknown => {
 	}
 
 	return execa.commandSync(`npx --yes prisma ${cmd} --schema ${schema}`, {
-		stderr: 'inherit',
-		stdout: 'inherit',
-		stdin: 'inherit',
+		stdio: 'inherit',
 		env: {
 			...defaultEnv,
 			...env,

@@ -78,7 +78,7 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
         const currentStateSchema = path.join(migrationsPath,
             migrateUp
                 ? migration
-                : allMigrations[Math.min(allMigrations.indexOf(migration) - 1, 0)],
+                : allMigrations[Math.max(allMigrations.indexOf(migration) - 1, 0)],
             SCHEMA_FILE_NAME)
 
         console.log('updating schema definition according to migration')

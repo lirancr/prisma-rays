@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "build": "npx -p typescript tsc",
-    "test": "npx jest -runInBand --detectOpenHandles",
+    "test": "npx jest --runInBand --detectOpenHandles",
     "pretest": "cd ./test/test-project && npm install"
   },
   "repository": {
