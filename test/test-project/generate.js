@@ -1,7 +1,13 @@
 const fs = require('fs')
 const path = require('path')
 
-const schemaPath = path.join(__dirname, 'prisma', 'schema.prisma')
+const prismaDir = path.join(__dirname, 'prisma')
+const schemaPath = path.join(prismaDir, 'schema.prisma')
+
+if (!fs.existsSync(prismaDir)) {
+    fs.mkdirSync(prismaDir, { recursive: true })
+}
+
 
 const schema = `
     generator client {
