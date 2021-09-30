@@ -12,12 +12,13 @@ import type { IQueryBuilder } from './types'
 import { ALLOWED_ENGINES } from './constants'
 import * as fs from 'fs'
 import * as path from 'path'
+import {QueryBuilderFactory} from "./types";
 
-type BuildersMap = { [provider: string]: IQueryBuilder}
+type BuildersMap = { [provider: string]: QueryBuilderFactory}
 
 const enginesDir: string = path.join(__dirname, 'queryBuilders')
 
-const engines: BuildersMap = fs.readdirSync(enginesDir).reduce((agg: BuildersMap, file: string) => {
+const builders: BuildersMap = fs.readdirSync(enginesDir).reduce((agg: BuildersMap, file: string) => {
 	const provider = file.split('.')[0]
 	if (ALLOWED_ENGINES.includes(provider)) {
 		agg[provider] = require(path.join(enginesDir, provider))
@@ -27,10 +28,10 @@ const engines: BuildersMap = fs.readdirSync(enginesDir).reduce((agg: BuildersMap
 	return agg
 }, {})
 
-export const builderFor = (provider: string): IQueryBuilder => {
-	const engine: IQueryBuilder | undefined = engines[provider]
-	if (!engine) {
+export const builderFor = (provider: string, databaseUrl: string): IQueryBuilder => {
+	const builderFactory: QueryBuilderFactory | undefined = builders[provider]
+	if (!builderFactory) {
 		throw new Error('Unknown query builder provider '+provider)
 	}
-	return engine
+	return builderFactory(databaseUrl)
 }

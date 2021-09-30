@@ -26,6 +26,6 @@ export const schema = path.resolve(schemaPath)
 const schemaFile = fs.readFileSync(schema, UTF8)
 
 export const databaseUrlEnvVarName = getDatabaseUrlEnvVarNameFromSchema(schemaFile)!
-export const queryBuilder = queryBuilderProvider.builderFor(getDatabaseEngineFromSchema(schemaFile)!)!
+export const queryBuilder = queryBuilderProvider.builderFor(getDatabaseEngineFromSchema(schemaFile)!, databaseUrlEnvVarName)!
 export const migrationsPath =  path.resolve(migrationsDir)
 export { databaseUrl }

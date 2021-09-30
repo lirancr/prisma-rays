@@ -127,7 +127,7 @@ export const withSchema = (
             }
         }
 
-        const queryBuilder = queryBuilderProvider.builderFor('postgresql')
+        const queryBuilder = queryBuilderProvider.builderFor('postgresql', testOptions.env.DATABASE_URL)
 
         const prismaClientProvider = () => {
             return new PrismaClient({

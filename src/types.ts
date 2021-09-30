@@ -7,6 +7,8 @@ export interface LensConfig {
     verboseLogging: boolean
 }
 
+export type QueryBuilderFactory = (databaseUrl: string) => IQueryBuilder
+
 export interface IQueryBuilder {
     deleteAllFrom: (table: string) => string
     deleteFromBy: (table: string, column: string, value: string) => string

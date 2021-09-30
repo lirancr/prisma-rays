@@ -1,18 +1,23 @@
-import type { IQueryBuilder } from "../types";
+import {QueryBuilderFactory} from "../types";
 
-const engine: IQueryBuilder = {
-	deleteAllFrom: (table) => `DELETE FROM public."${table}";`,
-	deleteFromBy: (table, column, value) => `DELETE FROM public."${table}" where ${column}='${value}';`,
-	selectAllFrom: (table) => `SELECT * FROM public."${table}";`,
-	insertInto: (table, values) => {
-		const entries = Object.entries(values)
-		return `INSERT INTO public."${table}" (${entries.map(e => e[0]).join(',')}) VALUES ('${entries.map(e => e[1]).join("','")}')`
-	},
-	dropDatabaseIfExists: (db) => `DROP DATABASE IF EXISTS ${db};`,
-	createDatabase: (db) => `CREATE DATABASE ${db};`,
-	transactionBegin: () => `BEGIN;`,
-	transactionCommit: () => `COMMIT;`,
-	transactionRollback: () => `ROLLBACK;`,
+const factory: QueryBuilderFactory = (databaseUrl: string) => {
+	const matches = /postgresql:\/\/.+:.+@.+:[0-9]+\/[^?]+(?:\?schema=(.+))?/g.exec(databaseUrl)!
+	const schema = matches[1] || 'public'
+
+	return {
+		deleteAllFrom: (table) => `DELETE FROM ${schema}."${table}";`,
+			deleteFromBy: (table, column, value) => `DELETE FROM ${schema}."${table}" where ${column}='${value}';`,
+		selectAllFrom: (table) => `SELECT * FROM ${schema}."${table}";`,
+		insertInto: (table, values) => {
+			const entries = Object.entries(values)
+			return `INSERT INTO ${schema}."${table}" (${entries.map(e => e[0]).join(',')}) VALUES ('${entries.map(e => e[1]).join("','")}')`
+		},
+		dropDatabaseIfExists: (db) => `DROP DATABASE IF EXISTS ${db};`,
+		createDatabase: (db) => `CREATE DATABASE ${db};`,
+		transactionBegin: () => `BEGIN;`,
+		transactionCommit: () => `COMMIT;`,
+		transactionRollback: () => `ROLLBACK;`,
+	}
 }
 
-module.exports = engine
+module.exports = factory
