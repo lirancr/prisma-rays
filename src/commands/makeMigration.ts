@@ -26,7 +26,7 @@ const generateMigrationScript = ({ migrationName, execUp, execDown}: IMigrationS
 
     const filepath = path.join(migrationsPath, migrationName, 'migration.js')
     fs.writeFileSync(filepath, scriptData)
-    commandSync(`npx --yes prettier --write ${filepath}`)
+    commandSync(`npx prettier --write ${filepath}`)
 }
 
 /**

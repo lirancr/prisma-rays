@@ -56,10 +56,9 @@ describe('Prepare', () => {
         async ({ plens, topology: { migrationsDir }, exec }) => {
             if (!fs.existsSync(migrationsDir)) {
                 fs.mkdirSync(migrationsDir)
-                fs.mkdirSync(path.join(migrationsDir, 'dummy_migration'))
             }
+            fs.mkdirSync(path.join(migrationsDir, 'dummy_migration'))
 
-            expect(fs.existsSync(migrationsDir)).toEqual(true)
             expect(fs.readdirSync(migrationsDir).length).toBeGreaterThanOrEqual(1)
 
             let failed = false
