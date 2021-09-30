@@ -1,6 +1,6 @@
 {
   "name": "prisma-lens",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Alternative migration client for prisma ORM",
   "main": "src/index.js",
   "scripts": {
