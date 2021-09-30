@@ -1,0 +1,11 @@
+language: node_js
+services:
+  - postgresql
+before_script:
+  - npm run build
+  - npm run pretest
+  - psql -c 'create database testdb;' -U postgres
+  - psql -c 'create database prisma_shadow;' -U postgres
+  - psql -c 'create database plens_shadow;' -U postgres
+script:
+  - npm run test:ci

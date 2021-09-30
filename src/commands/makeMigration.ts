@@ -40,12 +40,12 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
     // prepare sterile environment for migration generating
     const isShadowDatabaseConfigured = shadowDatabaseName!!
 
-    const dbName = databaseUrl.match(/postgresql:\/\/.+:.+@.+:[0-9]+\/([^?]+)\??.+/)!.pop()!
+    const dbName = databaseUrl.match(/postgresql:\/\/.+(?::.+)?@.+:[0-9]+\/([^?]+)\??.+/)!.pop()!
     const shadowDbName: string = isShadowDatabaseConfigured
         ? shadowDatabaseName!
         : `${dbName}_shadow_${name}_${Date.now()}`
     const shadowDbUrl = databaseUrl
-        .replace(/(postgresql:\/\/.+:.+@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDbName}$3`)
+        .replace(/(postgresql:\/\/.+(?::.+)?@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDbName}$3`)
 
     const shadowEnv = {
         [databaseUrlEnvVarName]: shadowDbUrl

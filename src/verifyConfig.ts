@@ -68,7 +68,7 @@ const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: Len
 		return
 	}
 
-	const url = databaseUrl.replace(/(postgresql:\/\/.+:.+@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDatabaseName}$3`)
+	const url = databaseUrl.replace(/(postgresql:\/\/.+(?::.+)?@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDatabaseName}$3`)
 
 	const prisma = new PrismaClient({
 		datasources: {

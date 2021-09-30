@@ -5,8 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "build": "npx -p typescript tsc",
-    "test": "npx jest --runInBand --detectOpenHandles",
-    "pretest": "cd ./test/test-project && npm install"
+    "pretest": "cd ./test/test-project && npm install",
+    "test": "npx jest --runInBand",
+    "test:ci": "DATABASE_URL=postgres://postgres@127.0.0.1:5432/testdb SHADOW_DATABASE_URL=postgres://postgres@127.0.0.1:5432/prisma_shadow SHADOW_DATABASE_NAME=plens_shadow npx jest --runInBand"
   },
   "repository": {
     "type": "git",
