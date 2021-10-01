@@ -45,7 +45,8 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
         ? shadowDatabaseName!
         : `${dbName}_shadow_${name}_${Date.now()}`
     const shadowDbUrl = databaseUrl
-        .replace(/(postgresql:\/\/.+(?::.+)?@.+:[0-9]+\/)([^?]+)(\??.+)/, `$1${shadowDbName}$3`)
+        .replace(/(postgres(?:ql)?:\/\/.+(?::.+)?@.+:[0-9]+\/)([^?]+)(\?.+)?/, `$1${shadowDbName}$3`)
+
 
     const shadowEnv = {
         [databaseUrlEnvVarName]: shadowDbUrl
