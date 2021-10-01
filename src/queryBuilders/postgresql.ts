@@ -1,7 +1,7 @@
 import {QueryBuilderFactory} from "../types";
 
 const factory: QueryBuilderFactory = (databaseUrl: string) => {
-	const matches = /postgresql:\/\/.+(?::.+)?@.+:[0-9]+\/[^?]+(?:\?schema=(.+))?/g.exec(databaseUrl)
+	const matches = /postgres(?:ql)?:\/\/.+(?::.+)?@.+:[0-9]+\/[^?]+(?:\?schema=(.+))?/g.exec(databaseUrl)
 	if (!matches) {
 		throw new Error(`Invalid database url for postgres: ${databaseUrl}`)
 	}
