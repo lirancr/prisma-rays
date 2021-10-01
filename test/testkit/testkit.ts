@@ -55,7 +55,7 @@ const setSchema = (modelsSchema: string): string => {
     datasource db {
       provider = "postgresql"
       url      = env("DATABASE_URL")
-      ${ process.env.SHADOW_DATABASE_URL ? 'shadowDatabaseUrl = env("SHADOW_DATABASE_URL")' : '' }
+      ${ process.env.TEST_SHADOW_DATABASE_URL ? 'shadowDatabaseUrl = env("SHADOW_DATABASE_URL")' : '' }
     }
     
     ${modelsSchema}
@@ -86,9 +86,12 @@ const defaultTestkitOptions: TestKitOptions = {
     init: true,
     prepare: true,
     env: {
-        DATABASE_URL: process.env.DATABASE_URL || "postgresql://postgres:root@localhost:5432/plenstest?schema=public",
-        SHADOW_DATABASE_URL: process.env.SHADOW_DATABASE_URL || 'none', // for prisma migrate
+        DATABASE_URL: process.env.TEST_DATABASE_URL || "postgresql://postgres:root@localhost:5432/plenstest?schema=public",
     },
+}
+
+if (process.env.TEST_SHADOW_DATABASE_URL) {
+    defaultTestkitOptions.env.SHADOW_DATABASE_URL = process.env.TEST_SHADOW_DATABASE_URL
 }
 
 export const withSchema = (
@@ -119,12 +122,12 @@ export const withSchema = (
                 /databaseUrl: '.+',/g,
                 `databaseUrl: '${testOptions.env.DATABASE_URL}',`))
 
-            if (process.env.SHADOW_DATABASE_NAME) {
+            if (process.env.TEST_SHADOW_DATABASE_NAME) {
                 // set shadow database name for test
                 fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
                     .replace(
                         /shadowDatabaseName: .+,/g,
-                        `shadowDatabaseName: '${process.env.SHADOW_DATABASE_NAME}',`))
+                        `shadowDatabaseName: '${process.env.TEST_SHADOW_DATABASE_NAME}',`))
             }
 
             if (testOptions.prepare) {
@@ -139,36 +142,41 @@ export const withSchema = (
 
         const queryBuilder = queryBuilderProvider.builderFor('postgresql', testOptions.env.DATABASE_URL)
 
-        const prismaClientProvider = () => {
-            return new PrismaClient({
-                log: ['warn', 'error'],
-                datasources: {
-                    db: {
-                        url: testOptions.env.DATABASE_URL
-                    }
-                }
-            })
-        }
-
-        return testFn({
-            plens,
-            setSchema,
-            topology,
-            exec,
-            queryBuilder,
-            raw: {
-                query: (command: string): Promise<any> => {
-                    const rawCommand: any = [command]
-                    rawCommand.raw = [command]
-                    return prismaClientProvider().$queryRaw(rawCommand)
-                },
-                execute: (command: string): Promise<any> => {
-                    const rawCommand: any = [command]
-                    rawCommand.raw = [command]
-                    return prismaClientProvider().$executeRaw(rawCommand)
+        const prismaClient = new PrismaClient({
+            log: ['warn', 'error'],
+            datasources: {
+                db: {
+                    url: testOptions.env.DATABASE_URL
                 }
             }
         })
+
+        try {
+            const testResult = await testFn({
+                plens,
+                setSchema,
+                topology,
+                exec,
+                queryBuilder,
+                raw: {
+                    query: (command: string): Promise<any> => {
+                        const rawCommand: any = [command]
+                        rawCommand.raw = [command]
+                        return prismaClient.$queryRaw(rawCommand)
+                    },
+                    execute: (command: string): Promise<any> => {
+                        const rawCommand: any = [command]
+                        rawCommand.raw = [command]
+                        return prismaClient.$executeRaw(rawCommand)
+                    }
+                }
+            })
+            prismaClient.$disconnect()
+            return testResult
+        } catch (e) {
+            prismaClient.$disconnect()
+            throw e
+        }
     }
 }
 
