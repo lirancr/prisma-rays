@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import execa from 'execa'
-import * as queryBuilderProvider from '../../src/queryBuilderProvider'
+import * as engineProvider from '../../src/engineProvider'
 import {UTF8} from "../../src/constants";
 import { PrismaClient } from '@prisma/client'
 import type {IQueryBuilder} from "../../src/types";
@@ -140,7 +140,8 @@ export const withSchema = (
             }
         }
 
-        const queryBuilder = queryBuilderProvider.builderFor('postgresql', testOptions.env.DATABASE_URL)
+        const engine = engineProvider.engineFor(testOptions.env.DATABASE_URL)
+        const queryBuilder = engine.queryBuilderFactory(testOptions.env.DATABASE_URL)
 
         const prismaClientProvider = () => new PrismaClient({
             log: ['warn', 'error'],

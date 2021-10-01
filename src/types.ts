@@ -8,6 +8,16 @@ export interface LensConfig {
     verboseLogging: boolean
 }
 
+export interface IEngine {
+    /** matches the give url with the url pattern associated with the target database */
+    isEngineForUrl: (databaseUrl: string) => boolean
+    /** build a valid database url based on the given databaseUrl but with different database name */
+    makeUrlForDatabase: (databaseUrl: string, dbName: string) => string
+    /** extracts database name from it's url */
+    getDatabaseName: (databaseUrl: string) => string
+    queryBuilderFactory: QueryBuilderFactory
+}
+
 export type QueryBuilderFactory = (databaseUrl: string) => IQueryBuilder
 
 export interface IQueryBuilder {

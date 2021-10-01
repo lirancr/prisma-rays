@@ -1,6 +1,6 @@
 import { prismaSync, commandSync } from '../cmd'
 import { UTF8, SCHEMA_FILE_NAME } from '../constants'
-import { schema, databaseUrl, shadowDatabaseName, databaseUrlEnvVarName, queryBuilder } from '../config'
+import { schema, databaseUrl, shadowDatabaseName, databaseUrlEnvVarName, databaseEngine, queryBuilder } from '../config'
 import * as path from 'path'
 import * as fs from 'fs'
 import { getMigrationFolders, migrationsPath } from '../migrationFileUtils'
@@ -40,13 +40,11 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
     // prepare sterile environment for migration generating
     const isShadowDatabaseConfigured = shadowDatabaseName!!
 
-    const dbName = databaseUrl.match(/postgres(?:ql)?:\/\/.+(?::.+)?@.+:[0-9]+\/([^?]+)\??.+/)!.pop()!
+    const dbName = databaseEngine.getDatabaseName(databaseUrl)
     const shadowDbName: string = isShadowDatabaseConfigured
         ? shadowDatabaseName!
         : `${dbName}_shadow_${name}_${Date.now()}`
-    const shadowDbUrl = databaseUrl
-        .replace(/(postgres(?:ql)?:\/\/.+(?::.+)?@.+:[0-9]+\/)([^?]+)(\?.+)?/, `$1${shadowDbName}$3`)
-
+    const shadowDbUrl = databaseEngine.makeUrlForDatabase(databaseUrl, shadowDbName)
 
     const shadowEnv = {
         [databaseUrlEnvVarName]: shadowDbUrl

@@ -1,3 +1,5 @@
+[![Build Status](https://app.travis-ci.com/lirancr/prisma-lens.svg?branch=master)](https://app.travis-ci.com/lirancr/prisma-lens)
+
 # Prisma Lens 🔍
 ### Prisma ORM migration tool for developers who want control.
 
@@ -298,11 +300,10 @@ when running `prisma lens` commands. Annoying, I know.
 
 #### Databases support
 
-At the moment `prisma lens` only officially support and tested against `postgresql`, this is due to some raw db queries
-used internally to perform the different functions. It's possible that these queries are written in a syntax recognized
-by other relational databases but those have not been tested against.
+At the moment `prisma lens` only supports `postgresql`, this is due to some raw db queries
+used internally to perform the different functions.
 
-If you're interested in helping with this issue feel free to submit a pull request, adding your [query builder file](./src/queryBuilders)
+If you're interested in helping with this issue feel free to submit a pull request, adding your [engine file](./src/engines)`
 
 ## Going back to prisma migrate
 

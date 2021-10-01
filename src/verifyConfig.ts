@@ -3,8 +3,9 @@ import * as path from 'path'
 import * as fs from 'fs'
 import {PrismaClient} from "@prisma/client"
 import processArguments from './processArguments'
-import { DEFAULT_CONFIG_FILE_NAME, UTF8, ALLOWED_ENGINES } from './constants'
+import { DEFAULT_CONFIG_FILE_NAME, UTF8 } from './constants'
 import { getDatabaseUrlEnvVarNameFromSchema, getDatabaseEngineFromSchema } from './utils'
+import * as engineProvider from '../src/engineProvider'
 
 const configError = (msg: string) => {
 	throw new Error('LensConfigError: ' + msg);
@@ -38,8 +39,8 @@ const verifySchemaPath = ({ schemaPath }: LensConfig) => {
 	}
 
 	const dbProvider = getDatabaseEngineFromSchema(schema)
-	if (!ALLOWED_ENGINES.includes(dbProvider!)) {
-		configError('Bad prisma schema file, your schema specifies an unsupported database provider: "'+dbProvider +'", must be one of '+ALLOWED_ENGINES.join(', '))
+	if (!engineProvider.ALLOWED_ENGINES.includes(dbProvider!)) {
+		configError('Bad prisma schema file, your schema specifies an unsupported database provider: "'+dbProvider +'", must be one of '+engineProvider.ALLOWED_ENGINES.join(', '))
 	}
 }
 
@@ -68,7 +69,7 @@ const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: Len
 		return
 	}
 
-	const url = databaseUrl.replace(/(postgres(?:ql)?:\/\/.+(?::.+)?@.+:[0-9]+\/)([^?]+)(\?.+)?/, `$1${shadowDatabaseName}$3`)
+	const url = engineProvider.engineFor(databaseUrl).makeUrlForDatabase(databaseUrl, shadowDatabaseName)
 
 	const prisma = new PrismaClient({
 		datasources: {
