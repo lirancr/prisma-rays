@@ -142,7 +142,7 @@ export const withSchema = (
 
         const queryBuilder = queryBuilderProvider.builderFor('postgresql', testOptions.env.DATABASE_URL)
 
-        const prismaClient = new PrismaClient({
+        const prismaClientProvider = () => new PrismaClient({
             log: ['warn', 'error'],
             datasources: {
                 db: {
@@ -151,32 +151,41 @@ export const withSchema = (
             }
         })
 
-        try {
-            const testResult = await testFn({
-                plens,
-                setSchema,
-                topology,
-                exec,
-                queryBuilder,
-                raw: {
-                    query: (command: string): Promise<any> => {
-                        const rawCommand: any = [command]
-                        rawCommand.raw = [command]
-                        return prismaClient.$queryRaw(rawCommand)
-                    },
-                    execute: (command: string): Promise<any> => {
-                        const rawCommand: any = [command]
-                        rawCommand.raw = [command]
-                        return prismaClient.$executeRaw(rawCommand)
+        return testFn({
+            plens,
+            setSchema,
+            topology,
+            exec,
+            queryBuilder,
+            raw: {
+                query: async (command: string): Promise<any> => {
+                    const rawCommand: any = [command]
+                    rawCommand.raw = [command]
+                    const client = prismaClientProvider()
+                    try {
+                        const res = await client.$queryRaw(rawCommand)
+                        await client.$disconnect()
+                        return res
+                    } catch (e) {
+                        await client.$disconnect()
+                        throw e
+                    }
+                },
+                execute: async (command: string): Promise<any> => {
+                    const rawCommand: any = [command]
+                    rawCommand.raw = [command]
+                    const client = prismaClientProvider()
+                    try {
+                        const res = await client.$executeRaw(rawCommand)
+                        await client.$disconnect()
+                        return res
+                    } catch (e) {
+                        await client.$disconnect()
+                        throw e
                     }
                 }
-            })
-            prismaClient.$disconnect()
-            return testResult
-        } catch (e) {
-            prismaClient.$disconnect()
-            throw e
-        }
+            }
+        })
     }
 }
 
