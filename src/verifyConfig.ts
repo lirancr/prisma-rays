@@ -5,7 +5,7 @@ import {PrismaClient} from "@prisma/client"
 import processArguments from './processArguments'
 import { DEFAULT_CONFIG_FILE_NAME, UTF8 } from './constants'
 import { getDatabaseUrlEnvVarNameFromSchema, getDatabaseEngineFromSchema } from './utils'
-import * as engineProvider from '../src/engineProvider'
+import * as engineProvider from './engineProvider'
 
 const configError = (msg: string) => {
 	throw new Error('LensConfigError: ' + msg);
