@@ -4,7 +4,7 @@ import { prismaSync } from "../cmd";
 import { SCHEMA_FILE_NAME } from '../constants'
 import {schema, migrationsPath, queryBuilder, databaseEngine, logger, databaseUrl} from "../config";
 import * as path from 'path';
-import * as  fs from 'fs';
+import { copyFileSync } from '../utils'
 import type {IDatabaseConnection, IMigrationScript, MigrateCommand} from "../types";
 
 /**
@@ -85,7 +85,7 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
             SCHEMA_FILE_NAME)
 
         console.log('updating schema definition according to migration')
-        fs.copyFileSync(
+        copyFileSync(
             currentStateSchema,
             schema
         )
