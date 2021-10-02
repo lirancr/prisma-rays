@@ -55,7 +55,7 @@ const setSchema = (modelsSchema: string): string => {
     }
     
     datasource db {
-      provider = "${ process.env.TEST_PROVIDER || 'postgresql'}"
+      provider = env("PROVIDER")"
       url      = env("DATABASE_URL")
       ${ process.env.TEST_SHADOW_DATABASE_URL ? 'shadowDatabaseUrl = env("SHADOW_DATABASE_URL")' : '' }
     }
@@ -88,6 +88,7 @@ const defaultTestkitOptions: TestKitOptions = {
     init: true,
     prepare: true,
     env: {
+        PROVIDER: process.env.TEST_PROVIDER || "postgresql",
         DATABASE_URL: process.env.TEST_DATABASE_URL || "postgresql://postgres:root@localhost:5432/plenstest?schema=public",
     },
 }
