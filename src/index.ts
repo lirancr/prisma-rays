@@ -1,6 +1,7 @@
+import type {InitCommand, MakeMigrationCommand, MigrateCommand, PrepareCommand, StatusCommand} from "./types"
 import processArguments from './processArguments'
 import verifyConfig from './verifyConfig'
-import type {InitCommand, MakeMigrationCommand, MigrateCommand, PrepareCommand, StatusCommand} from "./types";
+import { releaseConnections } from "./databaseConnectionPool"
 
 const logHelp = (func: string, description: string, options: string[][] = []) => {
     const argsData = options.map((pair) => pair.join('   ')).join('\n           ')
@@ -81,7 +82,9 @@ if (command !== 'help' && 'help' in processArguments()) {
     configVerification.then(() => {
         return commands[command]()
     }).then(() => {
-        console.log(command, 'finished successfully')
+        releaseConnections().then(() => {
+            console.log(command, 'finished successfully')
+        })
     }).catch((e) => {
         process.on('exit', () => console.error(e))
         process.exit(1)

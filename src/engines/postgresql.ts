@@ -1,4 +1,6 @@
-import {QueryBuilderFactory, IEngine, IQueryBuilder} from "../types";
+import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection} from "../types";
+import * as connectionPool from '../databaseConnectionPool'
+import { Client } from 'pg'
 
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^postgres(?:ql)?:\/\//i.test(databaseUrl)
@@ -49,11 +51,38 @@ const queryBuilderFactory: QueryBuilderFactory =  (databaseUrl: string) => {
 	return queryBuilder
 }
 
+const createConnection = async (databaseUrl: string): Promise<IDatabaseConnection> => {
+	const client = new Client({
+		connectionString: databaseUrl
+	})
+	await client.connect()
+
+	const connection: IDatabaseConnection = {
+		query: async (q) => {
+			const res = await client.query(q)
+			return res.rows
+		},
+		execute: async (q) => {
+			const res = await client.query(q)
+			return res.rowCount
+		},
+		disconnect: async () => {
+			connectionPool.removeConnection(connection)
+			await client.end()
+		}
+	}
+
+	connectionPool.addConnection(connection)
+
+	return connection
+}
+
 const engine: IEngine = {
 	isEngineForUrl,
 	getDatabaseName,
 	makeUrlForDatabase,
 	queryBuilderFactory,
+	createConnection,
 }
 
 module.exports = engine

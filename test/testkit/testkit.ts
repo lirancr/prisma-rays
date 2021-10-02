@@ -147,14 +147,8 @@ export const withSchema = (
         const databaseName = engine.getDatabaseName(testOptions.env.DATABASE_URL)
         const queryBuilder = engine.queryBuilderFactory(testOptions.env.DATABASE_URL)
 
-        const prismaClientProvider = (_databaseName: string) => new PrismaClient({
-            log: ['warn', 'error'],
-            datasources: {
-                db: {
-                    url: _databaseName === databaseName ? testOptions.env.DATABASE_URL : engine.makeUrlForDatabase(testOptions.env.DATABASE_URL, _databaseName),
-                }
-            }
-        })
+        const databaseConnectionProvider = (_databaseName: string) =>
+            engine.createConnection(_databaseName === databaseName ? testOptions.env.DATABASE_URL : engine.makeUrlForDatabase(testOptions.env.DATABASE_URL, _databaseName))
 
         return testFn({
             plens,
@@ -165,28 +159,24 @@ export const withSchema = (
             shadowDatabaseName: process.env.TEST_SHADOW_DATABASE_NAME,
             raw: {
                 query: async (command: string, _databaseName: string = databaseName): Promise<any> => {
-                    const rawCommand: any = [command]
-                    rawCommand.raw = [command]
-                    const client = prismaClientProvider(_databaseName)
+                    const client = await databaseConnectionProvider(_databaseName)
                     try {
-                        const res = await client.$queryRawUnsafe(rawCommand)
-                        await client.$disconnect()
+                        const res = await client.query(command)
+                        await client.disconnect()
                         return res
                     } catch (e) {
-                        await client.$disconnect()
+                        await client.disconnect()
                         throw e
                     }
                 },
                 execute: async (command: string, _databaseName: string = databaseName): Promise<any> => {
-                    const rawCommand: any = [command]
-                    rawCommand.raw = [command]
-                    const client = prismaClientProvider(_databaseName)
+                    const client = await databaseConnectionProvider(_databaseName)
                     try {
-                        const res = await client.$executeRawUnsafe(rawCommand)
-                        await client.$disconnect()
+                        const res = await client.execute(command)
+                        await client.disconnect()
                         return res
                     } catch (e) {
-                        await client.$disconnect()
+                        await client.disconnect()
                         throw e
                     }
                 }

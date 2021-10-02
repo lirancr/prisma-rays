@@ -8,6 +8,12 @@ export interface LensConfig {
     verboseLogging: boolean
 }
 
+export interface IDatabaseConnection {
+    disconnect: () => Promise<void>
+    query: (query: string) => Promise<unknown[]>
+    execute: (query: string) => Promise<unknown>
+}
+
 export interface IEngine {
     /** matches the give url with the url pattern associated with the target database */
     isEngineForUrl: (databaseUrl: string) => boolean
@@ -16,6 +22,7 @@ export interface IEngine {
     /** extracts database name from it's url */
     getDatabaseName: (databaseUrl: string) => string
     queryBuilderFactory: QueryBuilderFactory
+    createConnection: (databaseUrl: string) => Promise<IDatabaseConnection>
 }
 
 export type QueryBuilderFactory = (databaseUrl: string) => IQueryBuilder

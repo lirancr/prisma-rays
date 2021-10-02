@@ -2,6 +2,7 @@ import {PrismaClient} from "@prisma/client"
 import {verbose, databaseUrl, queryBuilder, databaseEngine} from "./config"
 import { prismaSync } from './cmd'
 import { PRISMA_MIGRATIONS_TABLE, PRISMA_MIGRATION_NAME_COL } from "./constants";
+import {IDatabaseConnection} from "./types";
 
 const createPrismaClient = (url:string): PrismaClient => new PrismaClient({
     log: verbose ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
@@ -13,17 +14,16 @@ const createPrismaClient = (url:string): PrismaClient => new PrismaClient({
 })
 
 export const prisma = createPrismaClient(databaseUrl)
+const dbConnection = databaseEngine.createConnection(databaseUrl)
 
-export const executeRawOne = (command: string, client: PrismaClient = prisma): Promise<unknown> => {
-    const rawCommand: any = [command]
-    rawCommand.raw = [command]
-    return client.$executeRawUnsafe(rawCommand)
+export const executeRawOne = async (command: string, connection: Promise<IDatabaseConnection> = dbConnection): Promise<unknown> => {
+    const client = await connection
+    return client.execute(command)
 }
 
-const queryRawOne = (command: string, client: PrismaClient = prisma): Promise<any> => {
-    const rawCommand: any = [command]
-    rawCommand.raw = [command]
-    return client.$queryRawUnsafe(rawCommand)
+const queryRawOne = async (command: string, connection: Promise<IDatabaseConnection> = dbConnection): Promise<any> => {
+    const client = await connection
+    return client.query(command)
 }
 
 /**
@@ -85,24 +85,35 @@ export const splitMultilineQuery = (query: string): string[] => {
 }
 
 export const dropAllTables = async (databaseUrl: string): Promise<void> => {
-    const client = createPrismaClient(databaseUrl)
+    const connection = databaseEngine.createConnection(databaseUrl)
+    const client = await databaseEngine.createConnection(databaseUrl)
     const preQuery = queryBuilder.setForeignKeyCheckOff()
     const postQuery = queryBuilder.setForeignKeyCheckOn()
     const query = queryBuilder.selectAllTables(databaseEngine.getDatabaseName(databaseUrl))
 
-    const tables = await queryRawOne(query, client) as { tablename: string }[]
+    const tables = await queryRawOne(query, connection) as { tablename: string }[]
     if (tables.length > 0) {
         const command = tables.map(({tablename}) => queryBuilder.dropTableIfExistsCascade(tablename)).join('\n')
-        await executeRaw(preQuery + command + postQuery, client)
+        await executeRaw(preQuery + command + postQuery, connection)
     }
 
-    await client.$disconnect()
+    await client.disconnect()
 }
 
-export const executeRaw = async (query: string, client: PrismaClient = prisma): Promise<unknown> => {
+export const executeRaw = async (query: string, connection: Promise<IDatabaseConnection> = dbConnection): Promise<unknown> => {
     const commands = splitMultilineQuery(query)
 
-    return client.$transaction(
-        commands.map((cmd) => executeRawOne(cmd, client)) as any
-    )
+    const client = await connection
+    await client.execute(queryBuilder.transactionBegin())
+    try {
+        await client.execute(queryBuilder.transactionCommit())
+        let res
+        for (const cmd of commands) {
+            res = await client.execute(cmd)
+        }
+        return res
+    } catch (e) {
+        await client.execute(queryBuilder.transactionRollback())
+        throw e
+    }
 }

@@ -1,4 +1,6 @@
-import {QueryBuilderFactory, IEngine, IQueryBuilder} from "../types";
+import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection} from "../types";
+import * as connectionPool from "../databaseConnectionPool"
+import mySQL from 'mysql'
 
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^mysql:\/\//i.test(databaseUrl)
@@ -43,11 +45,47 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
 	return queryBuilder
 }
 
+const createConnection = async (databaseUrl: string): Promise<IDatabaseConnection> => {
+	const client = mySQL.createConnection(databaseUrl)
+
+	await new Promise<void>((resolve, reject) => {
+		client.connect((err) => {
+			err ? reject(err) : resolve()
+		})
+	})
+
+	const connection: IDatabaseConnection = {
+		query: (q) => new Promise<unknown[]>((resolve, reject) => {
+			client.query(q, (err, res) => {
+				err ? reject(err) : resolve(res as unknown[])
+			})
+		}),
+		execute: (q) => new Promise<unknown>((resolve, reject) => {
+			client.query(q, (err, res) => {
+				err ? reject(err) : resolve(res)
+			})
+		}),
+		disconnect: () => {
+			connectionPool.removeConnection(connection)
+			return new Promise((resolve, reject) => {
+				client.end((err) => {
+					err ? reject(err) : resolve()
+				})
+			})
+		}
+	}
+
+	connectionPool.addConnection(connection)
+
+	return connection
+}
+
 const engine: IEngine = {
 	isEngineForUrl,
 	getDatabaseName,
 	makeUrlForDatabase,
 	queryBuilderFactory,
+	createConnection,
 }
 
 module.exports = engine
