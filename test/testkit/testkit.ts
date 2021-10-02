@@ -15,6 +15,15 @@ const topology = {
     lensconfig: path.join(testProjectPath, 'lensconfig.js'),
 }
 
+const defaultTestkitOptions: TestKitOptions = {
+    init: true,
+    prepare: true,
+    env: {
+        PROVIDER: process.env.TEST_PROVIDER || "postgresql",
+        DATABASE_URL: process.env.TEST_DATABASE_URL || "postgresql://postgres:root@localhost:5432/plenstest?schema=public",
+    },
+}
+
 export type TestFunction = (testkit: {
     exec: (cmd: string, options?: execa.Options) => Promise<unknown>,
     plens: (cmd: string) => Promise<unknown>,
@@ -55,8 +64,8 @@ const setSchema = (modelsSchema: string): string => {
     }
     
     datasource db {
-      provider = "${ process.env.TEST_PROVIDER || "postgresql" }"
-      url      = env("DATABASE_URL")
+      provider = "${ process.env.TEST_PROVIDER || 'postgresql' }"
+      url      = "${ defaultTestkitOptions.env.DATABASE_URL }"
       ${ process.env.TEST_SHADOW_DATABASE_URL ? 'shadowDatabaseUrl = env("SHADOW_DATABASE_URL")' : '' }
     }
     
@@ -68,8 +77,6 @@ const setSchema = (modelsSchema: string): string => {
 
     fs.writeFileSync(schemaPath, schema)
 
-    console.error(schema)
-
     return schema
 }
 
@@ -77,8 +84,6 @@ const setEnv = (env: { [k: string]: string} ): string => {
     const envPath = path.join(testProjectPath, '.env')
     const envData = Object.entries(env).map(([k, v]) => `${k}="${v}"`).join('\n')
     fs.writeFileSync(envPath, envData)
-
-    console.error(envData)
     return envData
 }
 
@@ -86,15 +91,6 @@ type TestKitOptions = {
     init: boolean
     prepare: boolean,
     env: { [k: string]: string },
-}
-
-const defaultTestkitOptions: TestKitOptions = {
-    init: true,
-    prepare: true,
-    env: {
-        PROVIDER: process.env.TEST_PROVIDER || "postgresql",
-        DATABASE_URL: process.env.TEST_DATABASE_URL || "postgresql://postgres:root@localhost:5432/plenstest?schema=public",
-    },
 }
 
 if (process.env.TEST_SHADOW_DATABASE_URL) {
