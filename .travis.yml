@@ -12,5 +12,5 @@ before_script:
   - mysql -e 'CREATE DATABASE prisma_shadow;'
   - mysql -e 'CREATE DATABASE plens_shadow;'
 script:
-  - npm run test:ci:postgresql
   - npm run test:ci:mysql
+  - npm run test:ci:postgresql

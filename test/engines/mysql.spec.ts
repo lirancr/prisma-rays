@@ -8,7 +8,7 @@ const urlVariants = [
     'mysql://johndoe@host:3306/plenstest',
 ]
 
-describe('PostgreSQL engine', () => {
+describe('MySQL engine', () => {
     test('should match database urls', () => {
         expect(urlVariants.map(engine.isEngineForUrl)).not.toContain(false)
     })

@@ -23,7 +23,7 @@ Prisma Lens is heavily inspired by the UX given by the [Django](https://www.djan
 #### prerequisites
 - [prisma cli](https://www.npmjs.com/package/prisma) installed on your project
 - [prisma client](https://www.prisma.io/docs/getting-started/setup-prisma/start-from-scratch/relational-databases/install-prisma-client-typescript-postgres) installed on your project
-- existing postgres database (other [relational databases](https://www.prisma.io/docs/reference/database-reference/supported-databases) might also be supported but were not tested against at the moment)
+- existing `postgres`/`mysql` database (other [relational databases](https://www.prisma.io/docs/reference/database-reference/supported-databases) might also be supported but were not tested against at the moment)
 - `prisma.schema` file with database connection url provided from `.env` file
 - if using the auto-generated shadow database, your user credentials to the database should have the [appropriate permissions](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#shadow-database-user-permissions) for shadow database creation
 
@@ -300,8 +300,8 @@ when running `prisma lens` commands. Annoying, I know.
 
 #### Databases support
 
-At the moment `prisma lens` only supports `postgresql`, this is due to some raw db queries
-used internally to perform the different functions.
+At the moment `prisma lens` only supports `postgresql` & `mysql`,  (2 out of 3 relational databases prisma migration supports).
+This is due to some raw db queries used internally to perform the different functions.
 
 If you're interested in helping with this issue feel free to submit a pull request, adding your [engine file](./src/engines)`
 
