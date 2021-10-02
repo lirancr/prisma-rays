@@ -4,6 +4,7 @@ import migrate from './migrate'
 import { getMigrationFolders } from '../migrationFileUtils'
 import { clearMigrationsTable } from '../dbcommands'
 import type {PrepareCommand} from "../types";
+import { logger } from '../config'
 
 /**
  *
@@ -16,7 +17,7 @@ const command: PrepareCommand = async (approveReset): Promise<void> => {
     }
 
     if (!approveReset && await ask('Initializing the database will require dropping all the data from it. Continue? (y/n): ') !== 'y') {
-        console.log('aborting')
+        logger.log('aborting')
         return
     }
 

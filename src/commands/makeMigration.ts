@@ -1,6 +1,6 @@
 import { prismaSync, commandSync } from '../cmd'
 import { UTF8, SCHEMA_FILE_NAME } from '../constants'
-import { schema, databaseUrl, shadowDatabaseName, databaseUrlEnvVarName, databaseEngine, queryBuilder } from '../config'
+import { schema, databaseUrl, shadowDatabaseName, databaseUrlEnvVarName, databaseEngine, queryBuilder, logger } from '../config'
 import * as path from 'path'
 import * as fs from 'fs'
 import { getMigrationFolders, migrationsPath } from '../migrationFileUtils'
@@ -69,13 +69,13 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
     try {
         // perform migration
         const previousMigration = getMigrationFolders().pop()
-        console.log('Creating up migration')
+        logger.log('Creating up migration')
         prismaSync(`migrate dev --create-only --skip-seed --skip-generate --name ${name}`, shadowEnv)
 
         const newMigration = getMigrationFolders().pop()
 
         if (!newMigration) {
-            console.log('migration creation aborted')
+            logger.log('migration creation aborted')
             return null
         }
 
@@ -91,9 +91,9 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
         // check if new migration contain any changes at all
         if (migrationFileParams.execUp.length === 0) {
             if (blank) {
-                console.log('No schema changes detected. Creating blank migration')
+                logger.log('No schema changes detected. Creating blank migration')
             } else {
-                console.log('No schema changes detected. Migration not created')
+                logger.log('No schema changes detected. Migration not created')
                 fs.rmSync(path.join(migrationsPath, newMigration), { recursive: true })
                 return null
             }
@@ -109,7 +109,7 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
 
             await copyFile(previousSchema, schema)
 
-            console.log('Creating down migration')
+            logger.log('Creating down migration')
             prismaSync(`migrate dev --create-only --skip-seed --skip-generate --name revert`, shadowEnv)
 
             const revertMigration = getMigrationFolders().pop()!
