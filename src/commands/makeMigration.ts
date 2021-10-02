@@ -6,7 +6,7 @@ import * as fs from 'fs'
 import { getMigrationFolders, migrationsPath } from '../migrationFileUtils'
 import {dropAllTables, executeRaw, splitMultilineQuery} from '../dbcommands'
 import type {MakeMigrationCommand} from "../types"
-import { copyFileSync } from '../utils'
+import { copyFile } from '../utils'
 
 interface IMigrationScriptParams {
     migrationName: string
@@ -101,13 +101,13 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
 
         // copy current schema for future reverts
         const currentSchemaBackup = path.join(migrationsPath, newMigration, SCHEMA_FILE_NAME)
-        copyFileSync(schema, currentSchemaBackup)
+        await copyFile(schema, currentSchemaBackup)
 
         // create a revert migration script based on previous schema
         if (previousMigration) {
             const previousSchema = path.join(migrationsPath, previousMigration, SCHEMA_FILE_NAME)
 
-            copyFileSync(previousSchema, schema)
+            await copyFile(previousSchema, schema)
 
             console.log('Creating down migration')
             prismaSync(`migrate dev --create-only --skip-seed --skip-generate --name revert`, shadowEnv)
@@ -118,7 +118,7 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
 
             // cleanup
             fs.rmSync(path.join(migrationsPath, revertMigration), { recursive: true })
-            copyFileSync(currentSchemaBackup, schema)
+            await copyFile(currentSchemaBackup, schema)
         }
 
         generateMigrationScript(migrationFileParams)

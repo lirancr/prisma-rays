@@ -14,9 +14,9 @@ export const getDatabaseUrlEnvVarNameFromSchema = (schema: string): string | und
 	return dataSourceBlock ? /url\s*=\s*env\("(.+)"\)/.exec(dataSourceBlock)?.pop() : undefined
 }
 
-export const copyFileSync = (source: string, dest: string) => {
+export const copyFile = async (source: string, dest: string) => {
 	if (fs.existsSync(dest)) {
-		fs.rmSync(dest)
+		await new Promise(resolve => fs.rm(dest, resolve))
 	}
-	fs.copyFileSync(source, dest)
+	await new Promise(resolve => fs.copyFile(source, dest, resolve))
 }
