@@ -55,7 +55,7 @@ const setSchema = (modelsSchema: string): string => {
     }
     
     datasource db {
-      provider = env("PROVIDER")"
+      provider = env("PROVIDER")
       url      = env("DATABASE_URL")
       ${ process.env.TEST_SHADOW_DATABASE_URL ? 'shadowDatabaseUrl = env("SHADOW_DATABASE_URL")' : '' }
     }
