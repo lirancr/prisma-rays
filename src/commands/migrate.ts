@@ -1,11 +1,11 @@
 import { getMigrationFolders } from "../migrationFileUtils";
-import { getAppliedMigrations, insertMigration, deleteMigration, executeRawOne, prisma } from '../dbcommands'
+import { getAppliedMigrations, insertMigration, deleteMigration, executeRawOne } from '../dbcommands'
 import { prismaSync } from "../cmd";
 import { SCHEMA_FILE_NAME } from '../constants'
-import {schema, migrationsPath, queryBuilder} from "../config";
+import {schema, migrationsPath, queryBuilder, databaseEngine, logger, databaseUrl} from "../config";
 import * as path from 'path';
 import * as  fs from 'fs';
-import type {IMigrationScript, MigrateCommand} from "../types";
+import type {IDatabaseConnection, IMigrationScript, MigrateCommand} from "../types";
 
 /**
  *
@@ -63,9 +63,11 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
         const migrationScript: IMigrationScript = require(path.join(migrationsPath, migration, 'migration.js'))
         if (!fake) {
             const migrationCommand = migrateUp ? migrationScript.up : migrationScript.down
+            const client: IDatabaseConnection = await databaseEngine.createConnection(databaseUrl, logger)
+
             try {
                 await executeRawOne(queryBuilder.transactionBegin())
-                await migrationCommand({ prisma })
+                await migrationCommand({ client })
                 await executeRawOne(queryBuilder.transactionCommit())
 
             } catch (e) {

@@ -27,11 +27,11 @@ export const schema = path.resolve(schemaPath)
 const schemaFile = fs.readFileSync(schema, UTF8)
 
 export const logger: ILogger = {
-    log: console.log,
+    log: verbose ? console.log : () => {},
     warn: console.warn,
     error: console.error,
-    info: console.info,
-    query: console.log,
+    info: verbose ? console.info : () => {},
+    query: true ? (db: string, ...args: any[]) => { console.log (db, ':', ...args)} : () => {},
 }
 
 export const databaseUrlEnvVarName = getDatabaseUrlEnvVarNameFromSchema(schemaFile)!

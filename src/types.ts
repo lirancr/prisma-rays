@@ -1,5 +1,3 @@
-import type { PrismaClient } from "@prisma/client"
-
 export interface LensConfig {
     migrationsDir: string
     schemaPath: string
@@ -44,8 +42,8 @@ export interface IQueryBuilder {
 }
 
 export interface IMigrationScript {
-    up: (arg: { prisma: PrismaClient }) => Promise<unknown>
-    down: (arg: { prisma: PrismaClient }) => Promise<unknown>
+    up: (arg: { client: IDatabaseConnection }) => Promise<unknown>
+    down: (arg: { client: IDatabaseConnection }) => Promise<unknown>
 }
 
 export interface ILogger {
@@ -53,7 +51,7 @@ export interface ILogger {
     error: (...args: any) => void
     warn: (...args: any) => void
     query: (...args: any) => void
-    info: (...args: any) => void
+    info: (databaseName: string, ...args: any) => void
 }
 
 export type InitCommand = () => Promise<void>

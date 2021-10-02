@@ -16,7 +16,7 @@ interface IMigrationScriptParams {
 const generateMigrationScript = ({ migrationName, execUp, execDown}: IMigrationScriptParams): void => {
     const createExecuteCommands = (arr: string[]) => arr
         .map((cmd) => cmd.replace(/`/g, '\\`'))
-        .map((cmd) => `await prisma.$executeRaw\`${cmd}\`;`)
+        .map((cmd) => `await client.execute(\`${cmd}\`);`)
         .join('\n')
 
     const scriptData = fs.readFileSync(path.join(__dirname, '..', 'templates', 'migration.template.js'), UTF8)

@@ -6,11 +6,11 @@
  * Do not however perform structure manipulations or modify the generated raw queries.
  */
 
-const up = async ({ prisma }) => {
+const up = async ({ client }) => {
 	$execUp
 }
 
-const down = async ({ prisma }) => {
+const down = async ({ client }) => {
 	$execDown
 }
 
