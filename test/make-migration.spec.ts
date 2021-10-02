@@ -25,7 +25,7 @@ model User {
 }`
 
 describe('MakeMigration', () => {
-    test.only('Create single migration file', withSchema({schema},
+    test('Create single migration file', withSchema({schema},
         async ({plens, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder, shadowDatabaseName}) => {
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
