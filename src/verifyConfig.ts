@@ -56,12 +56,12 @@ const verifyDatabaseUrl = async ({ databaseUrl }: LensConfig) => {
 			}
 		}
 	})
-	try {
+	// try {
 		await prisma.$connect()
 		await prisma.$disconnect()
-	} catch (e: any) {
-		configError('Bad databaseUrl value, unable to connect to database:\n' + databaseUrl + '\n' + e.message)
-	}
+	// } catch (e: any) {
+	// 	configError('Bad databaseUrl value, unable to connect to database:\n' + databaseUrl + '\n' + e.message)
+	// }
 }
 
 const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: LensConfig) => {
@@ -78,12 +78,12 @@ const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: Len
 			}
 		}
 	})
-	try {
+	// try {
 		await prisma.$connect()
 		await prisma.$disconnect()
-	} catch (e: any) {
-		configError('Bad shadowDatabaseName value, unable to connect to database:\n' + url + '\n' + e.message)
-	}
+	// } catch (e: any) {
+	// 	configError('Bad shadowDatabaseName value, unable to connect to database:\n' + url + '\n' + e.message)
+	// }
 }
 
 export default async (): Promise<void> => {
