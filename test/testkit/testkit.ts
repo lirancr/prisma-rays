@@ -49,8 +49,6 @@ const setSchema = (modelsSchema: string): string => {
 
     const schemaPath = path.join(testProjectPath, 'prisma', 'schema.prisma')
 
-    throw new Error('provider: '+process.env.TEST_PROVIDER)
-
     const schema = `
     generator client {
       provider = "prisma-client-js"
@@ -70,6 +68,8 @@ const setSchema = (modelsSchema: string): string => {
 
     fs.writeFileSync(schemaPath, schema)
 
+    console.error(schema)
+
     return schema
 }
 
@@ -77,6 +77,8 @@ const setEnv = (env: { [k: string]: string} ): string => {
     const envPath = path.join(testProjectPath, '.env')
     const envData = Object.entries(env).map(([k, v]) => `${k}="${v}"`).join('\n')
     fs.writeFileSync(envPath, envData)
+
+    console.error(envData)
     return envData
 }
 
