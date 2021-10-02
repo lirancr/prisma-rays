@@ -169,7 +169,7 @@ export const withSchema = (
                     rawCommand.raw = [command]
                     const client = prismaClientProvider(_databaseName)
                     try {
-                        const res = await client.$queryRaw(rawCommand)
+                        const res = await client.$queryRawUnsafe(rawCommand)
                         await client.$disconnect()
                         return res
                     } catch (e) {
@@ -182,7 +182,7 @@ export const withSchema = (
                     rawCommand.raw = [command]
                     const client = prismaClientProvider(_databaseName)
                     try {
-                        const res = await client.$executeRaw(rawCommand)
+                        const res = await client.$executeRawUnsafe(rawCommand)
                         await client.$disconnect()
                         return res
                     } catch (e) {

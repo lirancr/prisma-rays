@@ -17,13 +17,13 @@ export const prisma = createPrismaClient(databaseUrl)
 export const executeRawOne = (command: string, client: PrismaClient = prisma): Promise<unknown> => {
     const rawCommand: any = [command]
     rawCommand.raw = [command]
-    return client.$executeRaw(rawCommand)
+    return client.$executeRawUnsafe(rawCommand)
 }
 
 const queryRawOne = (command: string, client: PrismaClient = prisma): Promise<any> => {
     const rawCommand: any = [command]
     rawCommand.raw = [command]
-    return client.$queryRaw(rawCommand)
+    return client.$queryRawUnsafe(rawCommand)
 }
 
 /**
