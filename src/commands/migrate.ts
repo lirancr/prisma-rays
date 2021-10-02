@@ -74,6 +74,7 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
                 await executeRawOne(queryBuilder.transactionRollback())
                 throw e
             }
+            await client.disconnect()
         }
         await (migrateUp ? insertMigration(migration) : deleteMigration(migration))
 
