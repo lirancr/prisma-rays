@@ -25,8 +25,8 @@ model User {
 }`
 
 describe('MakeMigration', () => {
-    test('Create single migration file', withSchema({schema},
-        async ({plens, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder}) => {
+    test.only('Create single migration file', withSchema({schema},
+        async ({plens, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder, shadowDatabaseName}) => {
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
@@ -57,6 +57,12 @@ describe('MakeMigration', () => {
                 id: expect.any(Number),
                 firstname: 'John',
             })
+
+            if (shadowDatabaseName) {
+                // ensure shadow database is reset after creating migration files
+                const tables = await raw.query(queryBuilder.selectAllTables(shadowDatabaseName), shadowDatabaseName) as { tablename: string }[]
+                expect(tables).toEqual([])
+            }
 
             const migrations: any[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)

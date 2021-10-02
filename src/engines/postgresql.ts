@@ -1,4 +1,4 @@
-import {QueryBuilderFactory, IEngine} from "../types";
+import {QueryBuilderFactory, IEngine, IQueryBuilder} from "../types";
 
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^postgres(?:ql)?:\/\//i.test(databaseUrl)
@@ -28,7 +28,7 @@ const queryBuilderFactory: QueryBuilderFactory =  (databaseUrl: string) => {
 	}
 	const schema = matches![1] || 'public'
 
-	return {
+	const queryBuilder: IQueryBuilder = {
 		deleteAllFrom: (table) => `DELETE FROM ${schema}."${table}";`,
 		deleteFromBy: (table, column, value) => `DELETE FROM ${schema}."${table}" where ${column}='${value}';`,
 		selectAllFrom: (table) => `SELECT * FROM ${schema}."${table}";`,
@@ -41,14 +41,12 @@ const queryBuilderFactory: QueryBuilderFactory =  (databaseUrl: string) => {
 		transactionBegin: () => `BEGIN;`,
 		transactionCommit: () => `COMMIT;`,
 		transactionRollback: () => `ROLLBACK;`,
-		dropAllTables: () => `DO $$ DECLARE
-  								r RECORD;
-						    BEGIN
-    							FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
-    							EXECUTE 'DROP TABLE ' || quote_ident(r.tablename) || ' CASCADE';
-  							END LOOP;
-							END $$;`
+		setForeignKeyCheckOn: () => ``,
+		setForeignKeyCheckOff: () => ``,
+		dropTableIfExistsCascade: (table) => `DROP TABLE IF EXISTS ${schema}."${table}" CASCADE;`,
+		selectAllTables: () => `SELECT tablename AS tablename FROM pg_tables WHERE schemaname = current_schema();`,
 	}
+	return queryBuilder
 }
 
 const engine: IEngine = {

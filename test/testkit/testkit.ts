@@ -19,6 +19,7 @@ export type TestFunction = (testkit: {
     exec: (cmd: string, options?: execa.Options) => Promise<unknown>,
     plens: (cmd: string) => Promise<unknown>,
     setSchema: (modelsSchema: string) => string,
+    shadowDatabaseName?: string
     topology: {
         root: string,
         migrationsDir: string,
@@ -27,8 +28,8 @@ export type TestFunction = (testkit: {
     },
     queryBuilder: IQueryBuilder,
     raw: {
-        query: (query: string) => Promise<any>,
-        execute: (query: string) => Promise<any>
+        query: (query: string, databaseName?: string) => Promise<any>,
+        execute: (query: string, databaseName?: string) => Promise<any>
     }
 }) => Promise<unknown>
 
@@ -36,6 +37,7 @@ const exec = async (cmd: string, options: execa.Options = {}) => {
     await execa.command(cmd, {
         cwd: testProjectPath,
         stdio: 'inherit',
+        extendEnv: false,
         ...options
     })
     await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -141,13 +143,14 @@ export const withSchema = (
         }
 
         const engine = engineProvider.engineFor(testOptions.env.DATABASE_URL)
+        const databaseName = engine.getDatabaseName(testOptions.env.DATABASE_URL)
         const queryBuilder = engine.queryBuilderFactory(testOptions.env.DATABASE_URL)
 
-        const prismaClientProvider = () => new PrismaClient({
+        const prismaClientProvider = (_databaseName: string) => new PrismaClient({
             log: ['warn', 'error'],
             datasources: {
                 db: {
-                    url: testOptions.env.DATABASE_URL
+                    url: _databaseName === databaseName ? testOptions.env.DATABASE_URL : engine.makeUrlForDatabase(testOptions.env.DATABASE_URL, _databaseName),
                 }
             }
         })
@@ -158,11 +161,12 @@ export const withSchema = (
             topology,
             exec,
             queryBuilder,
+            shadowDatabaseName: process.env.TEST_SHADOW_DATABASE_NAME,
             raw: {
-                query: async (command: string): Promise<any> => {
+                query: async (command: string, _databaseName: string = databaseName): Promise<any> => {
                     const rawCommand: any = [command]
                     rawCommand.raw = [command]
-                    const client = prismaClientProvider()
+                    const client = prismaClientProvider(_databaseName)
                     try {
                         const res = await client.$queryRaw(rawCommand)
                         await client.$disconnect()
@@ -172,10 +176,10 @@ export const withSchema = (
                         throw e
                     }
                 },
-                execute: async (command: string): Promise<any> => {
+                execute: async (command: string, _databaseName: string = databaseName): Promise<any> => {
                     const rawCommand: any = [command]
                     rawCommand.raw = [command]
-                    const client = prismaClientProvider()
+                    const client = prismaClientProvider(_databaseName)
                     try {
                         const res = await client.$executeRaw(rawCommand)
                         await client.$disconnect()

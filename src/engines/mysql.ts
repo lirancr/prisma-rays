@@ -1,4 +1,4 @@
-import {QueryBuilderFactory, IEngine} from "../types";
+import {QueryBuilderFactory, IEngine, IQueryBuilder} from "../types";
 
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^mysql:\/\//i.test(databaseUrl)
@@ -21,7 +21,7 @@ const makeUrlForDatabase = (databaseUrl: string, dbName: string): string => {
 }
 
 const queryBuilderFactory: QueryBuilderFactory =  () => {
-	return {
+	const queryBuilder: IQueryBuilder = {
 		deleteAllFrom: (table) => `DELETE FROM ${table};`,
 		deleteFromBy: (table, column, value) => `DELETE FROM ${table} where ${column}='${value}';`,
 		selectAllFrom: (table) => `SELECT * FROM "${table}";`,
@@ -34,19 +34,13 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
 		transactionBegin: () => `BEGIN;`,
 		transactionCommit: () => `COMMIT;`,
 		transactionRollback: () => `ROLLBACK;`,
-		dropAllTables: () => `SET FOREIGN_KEY_CHECKS = 0;
-								SET GROUP_CONCAT_MAX_LEN=32768;
-								SET @tables = NULL;
-								SELECT GROUP_CONCAT('\`', table_name, '\`') INTO @tables
-								  FROM information_schema.tables
-								  WHERE table_schema = (SELECT DATABASE());
-								SELECT IFNULL(@tables,'dummy') INTO @tables;
-								SET @tables = CONCAT('DROP TABLE IF EXISTS ', @tables);
-								PREPARE stmt FROM @tables;
-								EXECUTE stmt;
-								DEALLOCATE PREPARE stmt;
-								SET FOREIGN_KEY_CHECKS = 1;`
+		setForeignKeyCheckOn: () => `SET FOREIGN_KEY_CHECKS = 0;`,
+		setForeignKeyCheckOff: () => `SET FOREIGN_KEY_CHECKS = 1;`,
+		dropTableIfExistsCascade: (table) => `DROP TABLE IF EXISTS ${table};`,
+		selectAllTables: (db) => `SELECT table_name FROM information_schema.tables WHERE table_schema = '${db}';`,
 	}
+
+	return queryBuilder
 }
 
 const engine: IEngine = {

@@ -1,5 +1,5 @@
 import {PrismaClient} from "@prisma/client"
-import {verbose, databaseUrl, queryBuilder} from "./config"
+import {verbose, databaseUrl, queryBuilder, databaseEngine} from "./config"
 import { prismaSync } from './cmd'
 import { PRISMA_MIGRATIONS_TABLE, PRISMA_MIGRATION_NAME_COL } from "./constants";
 
@@ -14,16 +14,16 @@ const createPrismaClient = (url:string): PrismaClient => new PrismaClient({
 
 export const prisma = createPrismaClient(databaseUrl)
 
-export const executeRawOne = (command: string): Promise<unknown> => {
+export const executeRawOne = (command: string, client: PrismaClient = prisma): Promise<unknown> => {
     const rawCommand: any = [command]
     rawCommand.raw = [command]
-    return prisma.$executeRaw(rawCommand)
+    return client.$executeRaw(rawCommand)
 }
 
-const queryRawOne = (command: string): Promise<any> => {
+const queryRawOne = (command: string, client: PrismaClient = prisma): Promise<any> => {
     const rawCommand: any = [command]
     rawCommand.raw = [command]
-    return prisma.$queryRaw(rawCommand)
+    return client.$queryRaw(rawCommand)
 }
 
 /**
@@ -86,19 +86,23 @@ export const splitMultilineQuery = (query: string): string[] => {
 
 export const dropAllTables = async (databaseUrl: string): Promise<void> => {
     const client = createPrismaClient(databaseUrl)
+    const preQuery = queryBuilder.setForeignKeyCheckOff()
+    const postQuery = queryBuilder.setForeignKeyCheckOn()
+    const query = queryBuilder.selectAllTables(databaseEngine.getDatabaseName(databaseUrl))
 
-    const command = queryBuilder.dropAllTables()
-    const rawCommand: any = [command]
-    rawCommand.raw = [command]
-    await client.$executeRaw(rawCommand)
+    const tables = await queryRawOne(query, client) as { tablename: string }[]
+    if (tables.length > 0) {
+        const command = tables.map(({tablename}) => queryBuilder.dropTableIfExistsCascade(tablename)).join('\n')
+        await executeRaw(preQuery + command + postQuery, client)
+    }
 
     await client.$disconnect()
 }
 
-export const executeRaw = async (query: string): Promise<unknown> => {
+export const executeRaw = async (query: string, client: PrismaClient = prisma): Promise<unknown> => {
     const commands = splitMultilineQuery(query)
 
-    return prisma.$transaction(
-        commands.map(executeRawOne) as any
+    return client.$transaction(
+        commands.map((cmd) => executeRawOne(cmd, client)) as any
     )
 }

@@ -30,7 +30,10 @@ export interface IQueryBuilder {
     transactionBegin: () => string
     transactionCommit: () => string
     transactionRollback: () => string
-    dropAllTables: () => string
+    setForeignKeyCheckOn: () => string
+    setForeignKeyCheckOff: () => string
+    dropTableIfExistsCascade: (table: string) => string
+    selectAllTables: (db: string) => string
 }
 
 export interface IMigrationScript {
