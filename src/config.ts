@@ -31,7 +31,7 @@ export const logger: ILogger = {
     warn: console.warn,
     error: console.error,
     info: verbose ? console.info : () => {},
-    query: true ? (db: string, ...args: any[]) => { console.log (db, ':', ...args)} : () => {},
+    query: verbose ? (db: string, ...args: any[]) => { console.log (db, ':', ...args)} : () => {},
 }
 
 export const databaseUrlEnvVarName = getDatabaseUrlEnvVarNameFromSchema(schemaFile)!

@@ -100,6 +100,7 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
 
         // copy current schema for future reverts
         const currentSchemaBackup = path.join(migrationsPath, newMigration, SCHEMA_FILE_NAME)
+        fs.rmSync(currentSchemaBackup)
         fs.copyFileSync(schema, currentSchemaBackup)
 
         // create a revert migration script based on previous schema
@@ -117,6 +118,7 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
 
             // cleanup
             fs.rmSync(path.join(migrationsPath, revertMigration), { recursive: true })
+            fs.rmSync(schema)
             fs.copyFileSync(currentSchemaBackup, schema)
         }
 
