@@ -39,7 +39,7 @@ describe('Prepare', () => {
                 fs.rmdirSync(migrationsDir, {recursive: true})
             }
 
-            await exec(`npx prisma db push --force-reset --accept-data-loss --skip-generate`)
+            await exec(`npx prisma db push --force-reset --accept-data-loss`)
             await plens('prepare --y')
 
             // create tables
