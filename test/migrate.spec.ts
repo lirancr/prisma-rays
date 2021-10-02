@@ -55,6 +55,7 @@ describe('Migrate', () => {
 
             const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
+                .sort()
 
             expect(appliedMigrations).toEqual(migrations)
 
@@ -82,6 +83,7 @@ describe('Migrate', () => {
 
             const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
+                .sort()
 
             expect(appliedMigrations).toEqual(migrations.slice(0, 2))
 
@@ -117,6 +119,7 @@ describe('Migrate', () => {
 
             const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
+                .sort()
 
             expect(appliedMigrations).toEqual(migrations.slice(0, 2))
 
@@ -143,6 +146,7 @@ describe('Migrate', () => {
 
             const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
                 .map(m => m.migration_name)
+                .sort()
 
             expect(appliedMigrations).toEqual(migrations)
 

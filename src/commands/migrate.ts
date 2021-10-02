@@ -19,7 +19,7 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
 
     console.log('verifying migration/database sync state')
     if (currentDbState.length > allMigrations.length) {
-        throw new Error('Unable to migrate database - database is at a later state than there are migrations.')
+        throw new Error('Unable to migrate database - database is at a later state than there are migrations.'+JSON.stringify(currentDbState))
     }
 
     currentDbState.forEach((n: string, i: number) => {

@@ -22,7 +22,7 @@ export interface IEngine {
     /** extracts database name from it's url */
     getDatabaseName: (databaseUrl: string) => string
     queryBuilderFactory: QueryBuilderFactory
-    createConnection: (databaseUrl: string) => Promise<IDatabaseConnection>
+    createConnection: (databaseUrl: string, verbose: boolean) => Promise<IDatabaseConnection>
 }
 
 export type QueryBuilderFactory = (databaseUrl: string) => IQueryBuilder

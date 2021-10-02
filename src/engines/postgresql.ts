@@ -51,7 +51,8 @@ const queryBuilderFactory: QueryBuilderFactory =  (databaseUrl: string) => {
 	return queryBuilder
 }
 
-const createConnection = async (databaseUrl: string): Promise<IDatabaseConnection> => {
+const createConnection = async (databaseUrl: string, verbose: boolean): Promise<IDatabaseConnection> => {
+	const dbname = getDatabaseName(databaseUrl)
 	const client = new Client({
 		connectionString: databaseUrl
 	})
@@ -59,10 +60,16 @@ const createConnection = async (databaseUrl: string): Promise<IDatabaseConnectio
 
 	const connection: IDatabaseConnection = {
 		query: async (q) => {
+			if (verbose) {
+				console.log(dbname, q)
+			}
 			const res = await client.query(q)
 			return res.rows
 		},
 		execute: async (q) => {
+			if (verbose) {
+				console.log(dbname, q)
+			}
 			const res = await client.query(q)
 			return res.rowCount
 		},

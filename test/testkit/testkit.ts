@@ -2,8 +2,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import execa from 'execa'
 import * as engineProvider from '../../src/engineProvider'
-import {UTF8} from "../../src/constants";
-import { PrismaClient } from '@prisma/client'
+import {UTF8} from "../../src/constants"
 import type {IQueryBuilder} from "../../src/types";
 
 const testProjectPath = path.join(__dirname, '..', 'test-project')
@@ -125,6 +124,12 @@ export const withSchema = (
                 /databaseUrl: '.+',/g,
                 `databaseUrl: '${testOptions.env.DATABASE_URL}',`))
 
+            // set verbose logging for test
+            fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
+                .replace(
+                    /verboseLogging: .+,/g,
+                    `verboseLogging: ${process.env.VERBOSE_LOGGING || 'false'},`))
+
             if (process.env.TEST_SHADOW_DATABASE_NAME) {
                 // set shadow database name for test
                 fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
@@ -148,7 +153,7 @@ export const withSchema = (
         const queryBuilder = engine.queryBuilderFactory(testOptions.env.DATABASE_URL)
 
         const databaseConnectionProvider = (_databaseName: string) =>
-            engine.createConnection(_databaseName === databaseName ? testOptions.env.DATABASE_URL : engine.makeUrlForDatabase(testOptions.env.DATABASE_URL, _databaseName))
+            engine.createConnection(_databaseName === databaseName ? testOptions.env.DATABASE_URL : engine.makeUrlForDatabase(testOptions.env.DATABASE_URL, _databaseName), false)
 
         return testFn({
             plens,

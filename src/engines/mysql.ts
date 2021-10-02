@@ -1,6 +1,6 @@
 import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection} from "../types";
 import * as connectionPool from "../databaseConnectionPool"
-import mySQL from 'mysql'
+import mySQL from 'mysql2/promise'
 
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^mysql:\/\//i.test(databaseUrl)
@@ -39,39 +39,33 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
 		setForeignKeyCheckOn: () => `SET FOREIGN_KEY_CHECKS = 0;`,
 		setForeignKeyCheckOff: () => `SET FOREIGN_KEY_CHECKS = 1;`,
 		dropTableIfExistsCascade: (table) => `DROP TABLE IF EXISTS ${table};`,
-		selectAllTables: (db) => `SELECT table_name FROM information_schema.tables WHERE table_schema = '${db}';`,
+		selectAllTables: (db) => `SELECT table_name AS tablename FROM information_schema.tables WHERE table_schema = '${db}';`,
 	}
 
 	return queryBuilder
 }
 
-const createConnection = async (databaseUrl: string): Promise<IDatabaseConnection> => {
-	const client = mySQL.createConnection(databaseUrl)
-
-	await new Promise<void>((resolve, reject) => {
-		client.connect((err) => {
-			err ? reject(err) : resolve()
-		})
-	})
+const createConnection = async (databaseUrl: string, verbose: boolean): Promise<IDatabaseConnection> => {
+	const dbname = getDatabaseName(databaseUrl)
+	const client = await mySQL.createConnection(databaseUrl)
 
 	const connection: IDatabaseConnection = {
-		query: (q) => new Promise<unknown[]>((resolve, reject) => {
-			client.query(q, (err, res) => {
-				err ? reject(err) : resolve(res as unknown[])
-			})
-		}),
-		execute: (q) => new Promise<unknown>((resolve, reject) => {
-			client.query(q, (err, res) => {
-				err ? reject(err) : resolve(res)
-			})
-		}),
+		query: async (q) => {
+			if (verbose) {
+				console.log(dbname, q)
+			}
+			const [rows] = await client.query(q)
+			return rows as unknown[]
+		},
+		execute: (q) => {
+			if (verbose) {
+				console.log(dbname, q)
+			}
+			return client.query(q)
+		},
 		disconnect: () => {
 			connectionPool.removeConnection(connection)
-			return new Promise((resolve, reject) => {
-				client.end((err) => {
-					err ? reject(err) : resolve()
-				})
-			})
+			return client.end()
 		}
 	}
 

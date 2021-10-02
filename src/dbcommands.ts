@@ -14,7 +14,7 @@ const createPrismaClient = (url:string): PrismaClient => new PrismaClient({
 })
 
 export const prisma = createPrismaClient(databaseUrl)
-const dbConnection = databaseEngine.createConnection(databaseUrl)
+const dbConnection = databaseEngine.createConnection(databaseUrl, verbose)
 
 export const executeRawOne = async (command: string, connection: Promise<IDatabaseConnection> = dbConnection): Promise<unknown> => {
     const client = await connection
@@ -85,8 +85,8 @@ export const splitMultilineQuery = (query: string): string[] => {
 }
 
 export const dropAllTables = async (databaseUrl: string): Promise<void> => {
-    const connection = databaseEngine.createConnection(databaseUrl)
-    const client = await databaseEngine.createConnection(databaseUrl)
+    const connection = databaseEngine.createConnection(databaseUrl, verbose)
+    const client = await connection
     const preQuery = queryBuilder.setForeignKeyCheckOff()
     const postQuery = queryBuilder.setForeignKeyCheckOn()
     const query = queryBuilder.selectAllTables(databaseEngine.getDatabaseName(databaseUrl))
@@ -95,6 +95,10 @@ export const dropAllTables = async (databaseUrl: string): Promise<void> => {
     if (tables.length > 0) {
         const command = tables.map(({tablename}) => queryBuilder.dropTableIfExistsCascade(tablename)).join('\n')
         await executeRaw(preQuery + command + postQuery, connection)
+    }
+
+    if ((await queryRawOne(query, connection) as { tablename: string }[]).length > 0) {
+        throw new Error('failed to remove tables of database '+databaseUrl)
     }
 
     await client.disconnect()
