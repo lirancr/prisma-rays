@@ -31,7 +31,7 @@ const verifySchemaPath = ({ schemaPath }: LensConfig) => {
 	if (!getDatabaseUrlEnvVarNameFromSchema(schema)) {
 		const demoSnippet = [
 			'datasource db {',
-			'  provider = "postgresql"',
+			'  provider = "provider"',
 			'  url      = env("DATABASE_URL")',
 			'}'
 		]
