@@ -49,6 +49,8 @@ const setSchema = (modelsSchema: string): string => {
 
     const schemaPath = path.join(testProjectPath, 'prisma', 'schema.prisma')
 
+    throw new Error('provider: '+process.env.TEST_PROVIDER)
+
     const schema = `
     generator client {
       provider = "prisma-client-js"
