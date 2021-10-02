@@ -153,7 +153,13 @@ export const withSchema = (
         const queryBuilder = engine.queryBuilderFactory(testOptions.env.DATABASE_URL)
 
         const databaseConnectionProvider = (_databaseName: string) =>
-            engine.createConnection(_databaseName === databaseName ? testOptions.env.DATABASE_URL : engine.makeUrlForDatabase(testOptions.env.DATABASE_URL, _databaseName), false)
+            engine.createConnection(_databaseName === databaseName ? testOptions.env.DATABASE_URL : engine.makeUrlForDatabase(testOptions.env.DATABASE_URL, _databaseName), {
+                log: () => {},
+                warn: () => {},
+                error: () => {},
+                info: () => {},
+                query: () => {},
+            })
 
         return testFn({
             plens,

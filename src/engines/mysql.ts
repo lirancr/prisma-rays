@@ -1,4 +1,4 @@
-import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection} from "../types";
+import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection, ILogger} from "../types";
 import * as connectionPool from "../databaseConnectionPool"
 import mySQL from 'mysql2/promise'
 
@@ -45,22 +45,18 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
 	return queryBuilder
 }
 
-const createConnection = async (databaseUrl: string, verbose: boolean): Promise<IDatabaseConnection> => {
+const createConnection = async (databaseUrl: string, logger: ILogger): Promise<IDatabaseConnection> => {
 	const dbname = getDatabaseName(databaseUrl)
 	const client = await mySQL.createConnection(databaseUrl)
 
 	const connection: IDatabaseConnection = {
 		query: async (q) => {
-			if (verbose) {
-				console.log(dbname, q)
-			}
+			logger.query(dbname, q)
 			const [rows] = await client.query(q)
 			return rows as unknown[]
 		},
 		execute: (q) => {
-			if (verbose) {
-				console.log(dbname, q)
-			}
+			logger.query(dbname, q)
 			return client.query(q)
 		},
 		disconnect: () => {

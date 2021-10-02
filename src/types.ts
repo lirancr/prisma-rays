@@ -22,7 +22,7 @@ export interface IEngine {
     /** extracts database name from it's url */
     getDatabaseName: (databaseUrl: string) => string
     queryBuilderFactory: QueryBuilderFactory
-    createConnection: (databaseUrl: string, verbose: boolean) => Promise<IDatabaseConnection>
+    createConnection: (databaseUrl: string, logger: ILogger) => Promise<IDatabaseConnection>
 }
 
 export type QueryBuilderFactory = (databaseUrl: string) => IQueryBuilder
@@ -46,6 +46,14 @@ export interface IQueryBuilder {
 export interface IMigrationScript {
     up: (arg: { prisma: PrismaClient }) => Promise<unknown>
     down: (arg: { prisma: PrismaClient }) => Promise<unknown>
+}
+
+export interface ILogger {
+    log: (...args: any) => void
+    error: (...args: any) => void
+    warn: (...args: any) => void
+    query: (...args: any) => void
+    info: (...args: any) => void
 }
 
 export type InitCommand = () => Promise<void>

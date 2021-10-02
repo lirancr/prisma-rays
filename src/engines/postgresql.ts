@@ -1,4 +1,4 @@
-import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection} from "../types";
+import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection, ILogger} from "../types";
 import * as connectionPool from '../databaseConnectionPool'
 import { Client } from 'pg'
 
@@ -51,7 +51,7 @@ const queryBuilderFactory: QueryBuilderFactory =  (databaseUrl: string) => {
 	return queryBuilder
 }
 
-const createConnection = async (databaseUrl: string, verbose: boolean): Promise<IDatabaseConnection> => {
+const createConnection = async (databaseUrl: string, logger: ILogger): Promise<IDatabaseConnection> => {
 	const dbname = getDatabaseName(databaseUrl)
 	const client = new Client({
 		connectionString: databaseUrl
@@ -60,16 +60,12 @@ const createConnection = async (databaseUrl: string, verbose: boolean): Promise<
 
 	const connection: IDatabaseConnection = {
 		query: async (q) => {
-			if (verbose) {
-				console.log(dbname, q)
-			}
+			logger.query(dbname, q)
 			const res = await client.query(q)
 			return res.rows
 		},
 		execute: async (q) => {
-			if (verbose) {
-				console.log(dbname, q)
-			}
+			logger.query(dbname, q)
 			const res = await client.query(q)
 			return res.rowCount
 		},
