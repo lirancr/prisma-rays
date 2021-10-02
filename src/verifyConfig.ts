@@ -60,7 +60,7 @@ const verifyDatabaseUrl = async ({ databaseUrl }: LensConfig) => {
 		await prisma.$connect()
 		await prisma.$disconnect()
 	} catch (e: any) {
-		configError('Bad databaseUrl value, unable to connect to database:\n' + e.message)
+		configError('Bad databaseUrl value, unable to connect to database:\n' + databaseUrl + '\n' + e.message)
 	}
 }
 
@@ -82,7 +82,7 @@ const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: Len
 		await prisma.$connect()
 		await prisma.$disconnect()
 	} catch (e: any) {
-		configError('Bad shadowDatabaseName value, unable to connect to database:\n' + e.message)
+		configError('Bad shadowDatabaseName value, unable to connect to database:\n' + url + '\n' + e.message)
 	}
 }
 
