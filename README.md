@@ -44,6 +44,12 @@ by running `npx rays prepare`. Otherwise, see [Adding to existing projects](#add
 2. remove all folders in your migrations directory, only keep the `migration_lock.toml` file.
 3. run `npx rays prepare`
 
+## Prisma rays workflow
+
+With prisma rays your typical workflow will be to make changes to your model (by modifying `prisma.schema`).
+Convert these changes to migration steps and at any point in time apply them all.
+
+In production your workflow should typically be to simply apply your migrations.
 
 ## Configuration
 
