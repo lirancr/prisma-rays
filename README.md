@@ -47,10 +47,14 @@ by running `npx rays prepare`. Otherwise, see [Adding to existing projects](#add
 
 ## Prisma rays workflow
 
-With prisma rays your typical workflow will be to make changes to your model (by modifying `prisma.schema`).
-Convert these changes to migration steps and at any point in time apply them all.
+With prisma rays your typical workflow will look like this:
+1. Modify your prisma schema file
+2. generate migrations based on changes using `makemigrations` command
+3. repeat steps 1 + 2 until you're ready to apply them.
+4. When you wish to apply the generated migrations run the `migrate` command
+5. push migration files to version control
 
-In production your workflow should typically be to simply apply your migrations.
+In production, your workflow should typically be to simply apply your migrations after you've pulled the changes from version control.
 
 ## Configuration
 
