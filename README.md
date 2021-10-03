@@ -1,4 +1,5 @@
 [![Build Status](https://app.travis-ci.com/lirancr/prisma-rays.svg?branch=master)](https://app.travis-ci.com/lirancr/prisma-rays)
+[![NPM Version](https://badge.fury.io/js/prisma-rays.svg?style=flat)](https://npmjs.org/package/esta)
 
 # Prisma Rays 💫
 ### Prisma ORM migration tool for developers who want control.
