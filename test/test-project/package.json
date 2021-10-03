@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@prisma/client": "file:../../node_modules/@prisma/client",
-    "prisma-lens": "file:../../",
+    "prisma-rays": "file:../../",
     "prisma": "file:../../node_modules/prisma"
   },
   "engines": {

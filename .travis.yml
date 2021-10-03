@@ -7,16 +7,19 @@ before_script:
   - npm run pretest
   - psql -c 'create database testdb;' -U postgres
   - psql -c 'create database prisma_shadow;' -U postgres
-  - psql -c 'create database plens_shadow;' -U postgres
+  - psql -c 'create database rays_shadow;' -U postgres
   - mysql -e 'CREATE DATABASE testdb;'
   - mysql -e 'CREATE DATABASE prisma_shadow;'
-  - mysql -e 'CREATE DATABASE plens_shadow;'
+  - mysql -e 'CREATE DATABASE rays_shadow;'
 script:
   - npm run test:ci:mysql
   - npm run test:ci:postgresql
+before_deploy:
+  - npm run build
 deploy:
   provider: npm
   email: $NPM_EMAIL
   api_key: $NPM_TOKEN
+  cleanup: true
   on:
-    branch: master
+    branch: production

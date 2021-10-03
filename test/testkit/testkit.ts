@@ -11,19 +11,19 @@ const topology = {
     root: testProjectPath,
     migrationsDir: path.join(testProjectPath, 'prisma', 'migrations'),
     schema: path.join(testProjectPath, 'prisma', 'schema.prisma'),
-    lensconfig: path.join(testProjectPath, 'lensconfig.js'),
+    raysconfig: path.join(testProjectPath, 'raysconfig.js'),
 }
 
 export type TestFunction = (testkit: {
     exec: (cmd: string, options?: execa.Options) => Promise<unknown>,
-    plens: (cmd: string) => Promise<unknown>,
+    rays: (cmd: string) => Promise<unknown>,
     setSchema: (modelsSchema: string) => string,
     shadowDatabaseName?: string
     topology: {
         root: string,
         migrationsDir: string,
         schema: string,
-        lensconfig: string,
+        raysconfig: string,
     },
     queryBuilder: IQueryBuilder,
     raw: {
@@ -42,7 +42,7 @@ const exec = async (cmd: string, options: execa.Options = {}) => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
 }
 
-const plens = (cmd: string) => exec(`npx plens ${cmd}`)
+const rays = (cmd: string) => exec(`npx rays ${cmd}`)
 
 const setSchema = (modelsSchema: string): string => {
 
@@ -88,7 +88,7 @@ const defaultTestkitOptions: TestKitOptions = {
     prepare: true,
     env: {
         PROVIDER: process.env.TEST_PROVIDER || "postgresql",
-        DATABASE_URL: process.env.TEST_DATABASE_URL || "postgresql://postgres:root@localhost:5432/plenstest?schema=public",
+        DATABASE_URL: process.env.TEST_DATABASE_URL || "postgresql://postgres:root@localhost:5432/raystest?schema=public",
     },
 }
 
@@ -111,28 +111,28 @@ export const withSchema = (
         setSchema(_options.schema)
 
         // delete previously created config file
-        if (fs.existsSync(topology.lensconfig)) {
-            fs.rmSync(topology.lensconfig)
+        if (fs.existsSync(topology.raysconfig)) {
+            fs.rmSync(topology.raysconfig)
         }
 
         if (testOptions.init) {
-            await plens('init')
+            await rays('init')
 
             // set database url for test
-            fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
+            fs.writeFileSync(topology.raysconfig, fs.readFileSync(topology.raysconfig, UTF8)
                 .replace(
                 /databaseUrl: '.+',/g,
                 `databaseUrl: '${testOptions.env.DATABASE_URL}',`))
 
             // set verbose logging for test
-            fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
+            fs.writeFileSync(topology.raysconfig, fs.readFileSync(topology.raysconfig, UTF8)
                 .replace(
                     /verboseLogging: .+,/g,
                     `verboseLogging: ${process.env.VERBOSE_LOGGING || 'false'},`))
 
             if (process.env.TEST_SHADOW_DATABASE_NAME) {
                 // set shadow database name for test
-                fs.writeFileSync(topology.lensconfig, fs.readFileSync(topology.lensconfig, UTF8)
+                fs.writeFileSync(topology.raysconfig, fs.readFileSync(topology.raysconfig, UTF8)
                     .replace(
                         /shadowDatabaseName: .+,/g,
                         `shadowDatabaseName: '${process.env.TEST_SHADOW_DATABASE_NAME}',`))
@@ -144,7 +144,7 @@ export const withSchema = (
                 }
 
                 await exec(`npx prisma db push --force-reset --accept-data-loss`)
-                await plens('prepare --y')
+                await rays('prepare --y')
             }
         }
 
@@ -162,7 +162,7 @@ export const withSchema = (
             })
 
         return testFn({
-            plens,
+            rays,
             setSchema,
             topology,
             exec,

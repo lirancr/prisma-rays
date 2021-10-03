@@ -1,4 +1,4 @@
-import type { LensConfig } from './types'
+import type { RaysConfig } from './types'
 import * as path from 'path'
 import * as fs from 'fs'
 import {PrismaClient} from "@prisma/client"
@@ -8,16 +8,16 @@ import { getDatabaseUrlEnvVarNameFromSchema, getDatabaseEngineFromSchema } from 
 import * as engineProvider from './engineProvider'
 
 const configError = (msg: string) => {
-	throw new Error('LensConfigError: ' + msg);
+	throw new Error('RaysConfigError: ' + msg);
 }
 
-const verifyMigrationsDir = ({ migrationsDir }: LensConfig) => {
+const verifyMigrationsDir = ({ migrationsDir }: RaysConfig) => {
 	if (!migrationsDir) {
 		configError('Missing config value for migrationsDir')
 	}
 }
 
-const verifySchemaPath = ({ schemaPath }: LensConfig) => {
+const verifySchemaPath = ({ schemaPath }: RaysConfig) => {
 	if (!schemaPath) {
 		configError('Missing config value for schemaPath')
 	}
@@ -44,7 +44,7 @@ const verifySchemaPath = ({ schemaPath }: LensConfig) => {
 	}
 }
 
-const verifyDatabaseUrl = async ({ databaseUrl }: LensConfig) => {
+const verifyDatabaseUrl = async ({ databaseUrl }: RaysConfig) => {
 	if (!databaseUrl) {
 		configError('Missing config value for databaseUrl')
 	}
@@ -64,7 +64,7 @@ const verifyDatabaseUrl = async ({ databaseUrl }: LensConfig) => {
 	}
 }
 
-const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: LensConfig) => {
+const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: RaysConfig) => {
 	if (!shadowDatabaseName) {
 		return
 	}
@@ -89,10 +89,10 @@ const verifyShadowDatabaseName = async ({ shadowDatabaseName, databaseUrl }: Len
 export default async (): Promise<void> => {
 	const configFilePath = path.resolve(processArguments().conf || DEFAULT_CONFIG_FILE_NAME)
 	if (!fs.existsSync(configFilePath)) {
-		throw new Error(`Cannot file config file at: configFilePath\nDid you forget to run "npx plens init" ?`)
+		throw new Error(`Cannot file config file at: configFilePath\nDid you forget to run "npx rays init" ?`)
 	}
 
-	const config: LensConfig = require(configFilePath)
+	const config: RaysConfig = require(configFilePath)
 
 	await verifyMigrationsDir(config)
 	await verifySchemaPath(config)

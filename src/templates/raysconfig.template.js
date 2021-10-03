@@ -1,4 +1,4 @@
-// this is your Prisma Lens config
+// this is your Prisma Rays config
 
 module.exports = {
 	/* A path to your prisma migrations directory */

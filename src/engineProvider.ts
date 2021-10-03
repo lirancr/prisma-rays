@@ -1,6 +1,6 @@
 /**
- * A database engine in PrismaLens terms is an abstraction layer between prisma lens and the specific database implementations.
- * This way PrismaLens function, using execRaw/queryRaw without taking into account which database type it is.
+ * A database engine in PrismaRays terms is an abstraction layer between prisma rays and the specific database implementations.
+ * This way PrismaRays function, using execRaw/queryRaw without taking into account which database type it is.
  *
  * all engines should be placed in ./engines and be named according to their prisma name (i.e the provider set in
  * the prisma schema file).

@@ -5,4 +5,4 @@ build
 package-lock.json
 test/test-project/prisma
 test/test-project/.env
-test/test-project/lensconfig.js
+test/test-project/raysconfig.js

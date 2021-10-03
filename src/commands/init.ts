@@ -4,12 +4,12 @@ import type {InitCommand} from "../types"
 import { copyFile } from '../utils'
 
 const command: InitCommand = async () => {
-    console.log('Setting up Prisma Lens for your project')
+    console.log('Setting up Prisma Rays for your project')
 
-    console.log('Creating lensconfig file')
+    console.log('Creating raysconfig file')
     const configFilePath = path.resolve(DEFAULT_CONFIG_FILE_NAME)
     await copyFile(
-        path.join(__dirname, '..', 'templates', 'lensconfig.template.js'),
+        path.join(__dirname, '..', 'templates', 'raysconfig.template.js'),
         configFilePath,
     )
 

@@ -3,9 +3,9 @@ import type {IEngine} from "../../src/types";
 const engine: IEngine = require('../../src/engines/mysql')
 
 const urlVariants = [
-    'mysql://johndoe:pass@mysql–instance1.123456789012.us-east-1.rds.amazonaws.com:3306/plenstest',
-    'mysql://johndoe:pass@host:3306/plenstest',
-    'mysql://johndoe@host:3306/plenstest',
+    'mysql://johndoe:pass@mysql–instance1.123456789012.us-east-1.rds.amazonaws.com:3306/raystest',
+    'mysql://johndoe:pass@host:3306/raystest',
+    'mysql://johndoe@host:3306/raystest',
 ]
 
 describe('MySQL engine', () => {
@@ -33,7 +33,7 @@ describe('MySQL engine', () => {
                 return null
             }
         })).toEqual(urlVariants.map((url) =>
-            url.replace('plenstest', testdb)))
+            url.replace('raystest', testdb)))
     })
 
     test('should get database name', () => {
@@ -43,6 +43,6 @@ describe('MySQL engine', () => {
             } catch (e) {
                 return null
             }
-        })).toEqual(urlVariants.map(() => 'plenstest'))
+        })).toEqual(urlVariants.map(() => 'raystest'))
     })
 })

@@ -10,7 +10,7 @@ const logHelp = (func: string, description: string, options: string[][] = []) =>
 
 const apiHelp: { [name: string]: () => unknown } = {
     init: () => {
-        logHelp('init', 'Setup prisma lens for your project.')
+        logHelp('init', 'Setup prisma rays for your project.')
     },
     prepare: () => {
         logHelp('prepare', 'Initialize the migration system against the current existing database. Warning this will empty the database in the process.')

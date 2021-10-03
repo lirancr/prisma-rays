@@ -1,33 +1,33 @@
 import * as fs from 'fs'
 import {withSchema} from "./testkit/testkit";
-import type {LensConfig} from "../src/types";
+import type {RaysConfig} from "../src/types";
 
 const schema = ``
 
 describe('Init', () => {
-    test('Create lensconfig', withSchema({ schema, init: false },
-        async ({ plens, topology: { lensconfig } }) =>{
+    test('Create raysconfig', withSchema({ schema, init: false },
+        async ({ rays, topology: { raysconfig } }) =>{
             // delete previously created config file
-            if (fs.existsSync(lensconfig)) {
-                fs.rmSync(lensconfig)
+            if (fs.existsSync(raysconfig)) {
+                fs.rmSync(raysconfig)
             }
 
-            expect(fs.existsSync(lensconfig)).toBe(false)
-            await plens('init')
-            expect(fs.existsSync(lensconfig)).toBe(true)
+            expect(fs.existsSync(raysconfig)).toBe(false)
+            await rays('init')
+            expect(fs.existsSync(raysconfig)).toBe(true)
     }))
 
-    test('lensconfig module exports', withSchema({ schema, init: false },
-        async ({ plens, topology: { lensconfig } }) =>{
+    test('raysconfig module exports', withSchema({ schema, init: false },
+        async ({ rays, topology: { raysconfig } }) =>{
             // delete previously created config file
-            if (fs.existsSync(lensconfig)) {
-                fs.rmSync(lensconfig)
+            if (fs.existsSync(raysconfig)) {
+                fs.rmSync(raysconfig)
             }
 
-            await plens('init')
-            const lensConfig: LensConfig = require(lensconfig)
+            await rays('init')
+            const raysConfig: RaysConfig = require(raysconfig)
 
-            expect(lensConfig).toEqual({
+            expect(raysConfig).toEqual({
                 migrationsDir: expect.any(String),
                 schemaPath: expect.any(String),
                 databaseUrl: expect.any(String),

@@ -34,13 +34,13 @@ model User {
 describe('Prepare', () => {
 
     test('Create tables, migration & run migration', withSchema({ schema, prepare: false },
-        async ({ plens, topology: { migrationsDir }, exec, raw, queryBuilder }) => {
+        async ({ rays, topology: { migrationsDir }, exec, raw, queryBuilder }) => {
             if (fs.existsSync(migrationsDir)) {
                 fs.rmdirSync(migrationsDir, {recursive: true})
             }
 
             await exec(`npx prisma db push --force-reset --accept-data-loss`)
-            await plens('prepare --y')
+            await rays('prepare --y')
 
             // create tables
             expect(await raw.query(queryBuilder.selectAllFrom('Post'))).toEqual([])
@@ -53,7 +53,7 @@ describe('Prepare', () => {
     }))
 
     test('Fail if migrations dir not empty', withSchema({ schema, prepare: false },
-        async ({ plens, topology: { migrationsDir }, exec }) => {
+        async ({ rays, topology: { migrationsDir }, exec }) => {
             if (!fs.existsSync(migrationsDir)) {
                 fs.mkdirSync(migrationsDir)
             }
@@ -64,7 +64,7 @@ describe('Prepare', () => {
             let failed = false
             await exec(`npx prisma db push`)
             try {
-                await plens('prepare --y')
+                await rays('prepare --y')
             } catch (e) {
                 failed = true
             }

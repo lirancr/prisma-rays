@@ -1,22 +1,22 @@
-[![Build Status](https://app.travis-ci.com/lirancr/prisma-lens.svg?branch=master)](https://app.travis-ci.com/lirancr/prisma-lens)
+[![Build Status](https://app.travis-ci.com/lirancr/prisma-rays.svg?branch=master)](https://app.travis-ci.com/lirancr/prisma-rays)
 
-# Prisma Lens 🔍
+# Prisma Rays 💫
 ### Prisma ORM migration tool for developers who want control.
 
-prisma lens is a schema migration management tool built for [prisma ORM](https://www.prisma.io/).
+prisma rays is a schema migration management tool built for [prisma ORM](https://www.prisma.io/).
 It is meant to be used as a drop in replacement to the builtin `prisma migrate` cli.
 Providing many management improvements and a more intuitive api.
 
-## Why to use Prisma Lens
+## Why to use Prisma Rays
 
 Fair question, the wonderful devs on [prisma migrate](https://www.prisma.io/migrate) have made a great job on the builtin migration tool.
-In fact, Prisma Lens uses prisma migrate under the hood to generate its own migrations, so you don't have to worry about differences between schema parsers.
+In fact, Prisma Rays uses prisma migrate under the hood to generate its own migrations, so you don't have to worry about differences between schema parsers.
 
 However, prisma migrate is littered with all kind of counterintuitive behaviours and lack support for some flows which can be useful.
 
-See a feel list of differences between the two in the [Prisma Lens vs Prisma Migrate](#prisma-lens-vs-prisma-migrate) section
+See a feel list of differences between the two in the [Prisma Rays vs Prisma Migrate](#prisma-rays-vs-prisma-migrate) section
 
-Prisma Lens is heavily inspired by the UX given by the [Django](https://www.djangoproject.com/) framework builtin migration tool.
+Prisma Rays is heavily inspired by the UX given by the [Django](https://www.djangoproject.com/) framework builtin migration tool.
 
 ## Getting started
 
@@ -29,25 +29,25 @@ Prisma Lens is heavily inspired by the UX given by the [Django](https://www.djan
 
 #### Installation
 
-1. Install package `npm i  prisma-lens`
+1. Install package `npm i  prisma-rays`
 
    You may also install as global package instead of using `npx`
-2. in your project's root directory run `npx plens init`
-3. Open the generated `lensconfig.js` file and update it according to your project's setup (see [Configuration](#configuration) section for details).
+2. in your project's root directory run `npx rays init`
+3. Open the generated `raysconfig.js` file and update it according to your project's setup (see [Configuration](#configuration) section for details).
 
-If your project does not have existing migrations created from `prisma migrate` you can opt in to `prisma lens`
-by running `npx plens prepare`. Otherwise, see [Adding to existing projects](#adding-to-existing-projects)
+If your project does not have existing migrations created from `prisma migrate` you can opt in to `prisma rays`
+by running `npx rays prepare`. Otherwise, see [Adding to existing projects](#adding-to-existing-projects)
 
 #### Adding to existing projects
 
 1. make sure your database is currently at the starting state that fits your project.
 2. remove all folders in your migrations directory, only keep the `migration_lock.toml` file.
-3. run `npx plens prepare`
+3. run `npx rays prepare`
 
 
 ## Configuration
 
-Prisma Lens has a single configuration file `lensconfig.js`
+Prisma Rays has a single configuration file `raysconfig.js`
 
 #### Configuration options
 
@@ -65,32 +65,32 @@ For most setups you only need to set your `migrationsDir` and  `schemaPath` and 
 
 #### Configuring to work with cloud hosted / fixed shadow database
 
-Prisma Lens (and the underlying Prisma Migrate) uses shadow database to generate migration files based on schema changes without affecting your database.
-Using Prisma Lens require 2 separate shadow databases - one for prisma lens and another for prisma migrate.
+Prisma Rays (and the underlying Prisma Migrate) uses shadow database to generate migration files based on schema changes without affecting your database.
+Using Prisma Rays require 2 separate shadow databases - one for prisma rays and another for prisma migrate.
 With the basic configuration those databases are automatically created and dropped when creating migrations.
 
 There are however, cases where you might what to override this behaviour and specify your own shadow databases:
 - You don't have the appropriate permissions to create and drop databases.
 - Your database is hosted on a cloud service (which does not normally support creating and dropping database instances)
-- You use PrismaLens migration generating in your CI system (for example Prisma Lens tests run on CI)
+- You use Prisma Rays migration generating in your CI system (for example Prisma Rays tests run on CI)
 
 It's important to note that shadow databases only play a role when creating migrations (as part of `prepare` or `makemigration`).
 if you only need apply/revert migrations you do not need this special setup.
 
-When overriding the the shadow database behavior, instead of creating and dropping the shadow database, both Prisma Lens and Prisma Migrate
+When overriding the the shadow database behavior, instead of creating and dropping the shadow database, both Prisma Rays and Prisma Migrate
 simply drop all the tables in them and reuse them.
 
 *Configuration*
 
-1. In your `lensconfig.js` file update the `shadowDatabaseName` property to match the name of your shadow database to be used by prisma lens.
+1. In your `raysconfig.js` file update the `shadowDatabaseName` property to match the name of your shadow database to be used by prisma rays.
 
    This database must be accessible using the same credentials as your database. For example:
    ```
    databaseUrl='postgresql://user:password@dbhost:5432/mydb?schema=public'`
-   shadowDatabaseName='mydb_plens_shadow'`
+   shadowDatabaseName='mydb_rays_shadow'`
    ```
 
-   Shadow database url will be: `postgresql://user:password@dbhost:5432/mydb_plens_shadow?schema=public`
+   Shadow database url will be: `postgresql://user:password@dbhost:5432/mydb_rays_shadow?schema=public`
 
 
 2. configure shadow database for Prisma Migrate by setting `shadowDatabaseUrl` in your schema. read more on [prisma migrate docs](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#cloud-hosted-shadow-databases-must-be-created-manually)
@@ -103,7 +103,7 @@ simply drop all the tables in them and reuse them.
    }
    ```
 
-   This database must be different from shadow database set for prisma lens
+   This database must be different from shadow database set for prisma rays
 
 
 ## Usage
@@ -113,22 +113,22 @@ Optional global cli options with any command:
 Option | Values | description
 --- | --- | ---
 log | None | Run command with verbose logging.
-conf | File path | path to your lensconfig file.
+conf | File path | path to your  raysconfig file.
 help | None | prints the help chapter on the specific command.
 
 ### Commands
 
 #### init
 
-`npx plens init`
+`npx rays init`
 
-Setup prisma lens for your project, creating an initial `lensconfig.js` file
+Setup prisma rays for your project, creating an initial `raysconfig.js` file
 
 init is only ever required once in the entire lifespan of a project
 
 #### prepare
 
-`npx plens prepare <options>`
+`npx rays prepare <options>`
 
 Options:
 
@@ -146,11 +146,11 @@ Prepare is only ever required once in the entire lifespan of a project
 
 **example usage:**
 
-`npx plens prepare --y`
+`npx rays prepare --y`
 
 #### makemigration
 
-`npx plens makemigration --name <name> <options>`
+`npx rays makemigration --name <name> <options>`
 
 Options:
 
@@ -173,16 +173,16 @@ This function works by:
 
 create a migration suffixed by `myFirstMigration`:
 
-`npx plens makemigration --name myFirstMigration`
+`npx rays makemigration --name myFirstMigration`
 
 create a migration or blank if no changes, suffixed by `myFirstMigration`:
 
-`npx plens makemigration --name myFirstMigration --blank`
+`npx rays makemigration --name myFirstMigration --blank`
 
 
 #### migrate
 
-`npx plens migrate <options>`
+`npx rays migrate <options>`
 
 Options:
 
@@ -212,30 +212,30 @@ This function works by:
 
 apply all migrations:
 
-`npx plens migrate`
+`npx rays migrate`
 
 mark all un-applied migrations as applied without running them:
 
-`npx plens migrate --fake`
+`npx rays migrate --fake`
 
 apply migrations up/down to `myFirstMigration_20211109182020`:
 
-`npx plens migrate --name myFirstMigration_20211109182020`
+`npx rays migrate --name myFirstMigration_20211109182020`
 
 mark un-applied migrations up/down to `myFirstMigration_20211109182020` as applied/reverted without running them:
 
-`npx plens migrate --name myFirstMigration_20211109182020 --fake`
+`npx rays migrate --name myFirstMigration_20211109182020 --fake`
 
 
 #### status
 
-`npx plens status`
+`npx rays status`
 
 log the migration and schema status against the database structure
 
 ## migration.js
 
-Prisma Lens work with javascript files to manage migrations. Each migration file (a.k.a step)
+Prisma Rays work with javascript files to manage migrations. Each migration file (a.k.a step)
 exposes too functions:
 
 - up - run during forward migration
@@ -250,16 +250,16 @@ You can of course step in between commands to perform your own logic such as cha
 Because of this `migration.js` files doesn't even need to run any structure changes sql at all. you can use a blank migration
 to apply database wide data manipulation.
 
-in addition to the migration script, prisma lens also create a copy of each migration step schema so it can be reverted to at any time.
+in addition to the migration script, prisma rays also create a copy of each migration step schema so it can be reverted to at any time.
 
-## Prisma Lens vs Prisma Migrate
+## Prisma Rays vs Prisma Migrate
 
 #### Creating migrations
 
 In `prisma migrate`, attempting to create multiple migrations without applying any of them is not supported. if you attempt
 to create another migration while you have an un-applied migration pending it will by applied first.
 
-In `prisma lens`, creating migrations is completely separated from applying the migration, so you can create as many of those as you
+In `prisma rays`, creating migrations is completely separated from applying the migration, so you can create as many of those as you
 want.
 
 
@@ -267,21 +267,21 @@ want.
 
 `prisma migrate` only supports an SQL file as your migration. This might impose some limits on what you can do with migrations.
 
-`prisma lens` on the other hand uses a plain js file as your migration, so you can use it to perform complex data manipulations
+`prisma rays` on the other hand uses a plain js file as your migration, so you can use it to perform complex data manipulations
 and easily resolve data related issues during schema changes.
 
 For example assume you're adding a new non-null column to an existing table and need to provide a default value, 
-with `prisma lens` you can just populate a value in your migration file before the sql which create the non-null constraint.
+with `prisma rays` you can just populate a value in your migration file before the sql which create the non-null constraint.
 `prisma migrate` overcome this issue (in development) by offering you to reset the database
 
-Because `prisma lens` uses `prisma migrate` under the hood, you will still see `migration.sql` file created. This file is only kept to support `prisma migrate` usage by `prisma lens` but its not being used by it directly.
+Because `prisma rays` uses `prisma migrate` under the hood, you will still see `migration.sql` file created. This file is only kept to support `prisma migrate` usage by `prisma rays` but its not being used by it directly.
 
 
 #### Revert migration
 
 `prisma migrate` does not support reverting applied migrations.
 
-`prisma lens` support reverting applied migrations at any depth since it keeps a copy of the prisma schema every time it creates
+`prisma rays` support reverting applied migrations at any depth since it keeps a copy of the prisma schema every time it creates
 a migration.
 
 
@@ -289,34 +289,34 @@ a migration.
 
 `prisma migrate` is applying all migrations, without using transactions and only in one direction (e.g up), if your migration fail halfway the database is left in undetermined state until manually fixed
 
-`prisma lens` can apply as many migration steps as you wish in both directions to bring your database to the desired state. Each migration step is being run inside a transaction and is being rolled back on errors
+`prisma rays` can apply as many migration steps as you wish in both directions to bring your database to the desired state. Each migration step is being run inside a transaction and is being rolled back on errors
 
 ## Known limits and missing features
 
 #### So many logs
 
 Currently, even with verbose logging option turned off the you will still see every one of `prisma migrate` console logs
-when running `prisma lens` commands. Annoying, I know.
+when running `prisma rays` commands. Annoying, I know.
 
 #### Databases support
 
-At the moment `prisma lens` only supports `postgresql` & `mysql`,  (2 out of 3 relational databases prisma migration supports).
+At the moment `prisma rays` only supports `postgresql` & `mysql`,  (2 out of 3 relational databases prisma migration supports).
 This is due to some raw db queries used internally to perform the different functions.
 
 If you're interested in helping with this issue feel free to submit a pull request, adding your [engine file](./src/engines)`
 
 ## Going back to prisma migrate
 
-If you're unhappy with Prisma Lens or simply want to go back to the built in `prisma migrate` tool its easy to do so.
-1. run `npx plens migrate` to bring your database to the latest version
+If you're unhappy with Prisma Rays or simply want to go back to the built in `prisma migrate` tool its easy to do so.
+1. run `npx rays migrate` to bring your database to the latest version
 2. In the migrations folder, for each migration directory delete all the files except for the `migration.sql`
-3. if installed locally, uninstall prisma lens with `npm uninstall prisma-lens`
+3. if installed locally, uninstall prisma rays with `npm uninstall prisma-rays`
 
 ## Troubleshooting
 
-#### Error: P4001 The introspected database was empty while running plens prepare
+#### Error: P4001 The introspected database was empty while running rays prepare
 
 your database is empty so it cannot be used to generate the schema (maybe due to previous failure).
 Update your prisma schema to an initial point you want to support and run `npx prisma db push`.
-Then run `npx plens prepare` again
+Then run `npx rays prepare` again
 

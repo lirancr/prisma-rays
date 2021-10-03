@@ -1,4 +1,4 @@
-export interface LensConfig {
+export interface RaysConfig {
     migrationsDir: string
     schemaPath: string
     databaseUrl: string

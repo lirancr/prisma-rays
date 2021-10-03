@@ -3,14 +3,14 @@ import type {IEngine} from "../../src/types";
 const engine: IEngine = require('../../src/engines/postgresql')
 
 const urlVariants = [
-    'postgres://user:pass@localhost:5432/plenstest?schema=public',
-    'postgresql://user:pass@localhost:8888/plenstest?schema=omega',
-    'postgresql://user:pass@localhost:2345/plenstest',
-    'postgres://user:pass@localhost:5432/plenstest',
-    'postgres://user@localhost:5432/plenstest?schema=public',
-    'postgresql://user@localhost:8888/plenstest?schema=omega',
-    'postgresql://user@localhost:2345/plenstest',
-    'postgres://user:pass@localhost:5432/plenstest',
+    'postgres://user:pass@localhost:5432/raystest?schema=public',
+    'postgresql://user:pass@localhost:8888/raystest?schema=omega',
+    'postgresql://user:pass@localhost:2345/raystest',
+    'postgres://user:pass@localhost:5432/raystest',
+    'postgres://user@localhost:5432/raystest?schema=public',
+    'postgresql://user@localhost:8888/raystest?schema=omega',
+    'postgresql://user@localhost:2345/raystest',
+    'postgres://user:pass@localhost:5432/raystest',
 ]
 
 describe('PostgreSQL engine', () => {
@@ -38,7 +38,7 @@ describe('PostgreSQL engine', () => {
                 return null
             }
         })).toEqual(urlVariants.map((url) =>
-            url.replace('plenstest', testdb)))
+            url.replace('raystest', testdb)))
     })
 
     test('should get database name', () => {
@@ -48,6 +48,6 @@ describe('PostgreSQL engine', () => {
             } catch (e) {
                 return null
             }
-        })).toEqual(urlVariants.map(() => 'plenstest'))
+        })).toEqual(urlVariants.map(() => 'raystest'))
     })
 })

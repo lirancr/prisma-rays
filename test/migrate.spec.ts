@@ -24,14 +24,14 @@ model User {
   initials      String? @default("JD")
 }`
 
-const prepareTestEnvironment = async ({ setSchema, plens, raw, queryBuilder }: Parameters<TestFunction>[0]) => {
+const prepareTestEnvironment = async ({ setSchema, rays, raw, queryBuilder }: Parameters<TestFunction>[0]) => {
     await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
     setSchema(updatedSchema)
-    await plens('makemigration --name second')
+    await rays('makemigration --name second')
 
     setSchema(updatedSchema2)
-    await plens('makemigration --name third')
+    await rays('makemigration --name third')
 }
 
 const getUserRecord = async ({ raw, queryBuilder }: Parameters<TestFunction>[0]) => {
@@ -42,9 +42,9 @@ describe('Migrate', () => {
     test('Migrate to top', withSchema({ schema },
         async (args) => {
             await prepareTestEnvironment(args)
-            const { plens, topology: { migrationsDir, schema }, raw, queryBuilder } = args
+            const { rays, topology: { migrationsDir, schema }, raw, queryBuilder } = args
 
-            await plens('migrate')
+            await rays('migrate')
 
             const migrations = getMigrationsDirs()
 
@@ -70,11 +70,11 @@ describe('Migrate', () => {
     test('Migrate up to name', withSchema({ schema },
         async (args) => {
             await prepareTestEnvironment(args)
-            const { plens, topology: { migrationsDir, schema }, raw, queryBuilder } = args
+            const { rays, topology: { migrationsDir, schema }, raw, queryBuilder } = args
 
             const migrations = getMigrationsDirs()
 
-            await plens(`migrate --name ${ migrations[1] }`)
+            await rays(`migrate --name ${ migrations[1] }`)
 
             // ensure schema's are aligned
             const currentSchema = fs.readFileSync(schema, UTF8)
@@ -97,9 +97,9 @@ describe('Migrate', () => {
     test('Migrate down to name', withSchema({ schema },
         async (args) => {
             await prepareTestEnvironment(args)
-            const { plens, topology: { migrationsDir, schema }, raw, queryBuilder } = args
+            const { rays, topology: { migrationsDir, schema }, raw, queryBuilder } = args
 
-            await plens(`migrate`)
+            await rays(`migrate`)
 
             expect(await getUserRecord(args)).toEqual({
                 id: expect.any(Number),
@@ -110,7 +110,7 @@ describe('Migrate', () => {
 
             const migrations = getMigrationsDirs()
 
-            await plens(`migrate --name ${ migrations[1] }`)
+            await rays(`migrate --name ${ migrations[1] }`)
 
             // ensure schema's are aligned
             const currentSchema = fs.readFileSync(schema, UTF8)
@@ -133,9 +133,9 @@ describe('Migrate', () => {
     test('Fake migration', withSchema({ schema },
         async (args) => {
             await prepareTestEnvironment(args)
-            const { plens, topology: { migrationsDir, schema }, raw, queryBuilder } = args
+            const { rays, topology: { migrationsDir, schema }, raw, queryBuilder } = args
 
-            await plens('migrate --fake')
+            await rays('migrate --fake')
 
             const migrations = getMigrationsDirs()
 

@@ -26,7 +26,7 @@ model User {
 
 describe('MakeMigration', () => {
     test('Create single migration file', withSchema({schema},
-        async ({plens, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder, shadowDatabaseName}) => {
+        async ({rays, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder, shadowDatabaseName}) => {
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
@@ -37,7 +37,7 @@ describe('MakeMigration', () => {
 
             setSchema(updatedSchema)
 
-            await plens(`makemigration --name second`)
+            await rays(`makemigration --name second`)
 
             // ensure migration creation
             const migrationDirectories = getMigrationsDirs()
@@ -72,10 +72,10 @@ describe('MakeMigration', () => {
         }))
 
     test('Create non-blank migration file when changes detected and blank option given', withSchema({schema},
-        async ({plens, topology: {migrationsDir}, setSchema}) => {
+        async ({rays, topology: {migrationsDir}, setSchema}) => {
             setSchema(updatedSchema)
 
-            await plens(`makemigration --name second --blank`)
+            await rays(`makemigration --name second --blank`)
 
             // ensure migration creation
             const migrationDirectories = getMigrationsDirs()
@@ -87,7 +87,7 @@ describe('MakeMigration', () => {
         }))
 
     test('Create multiple migration files without applying', withSchema({schema},
-        async ({plens, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder}) => {
+        async ({rays, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder}) => {
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
@@ -98,11 +98,11 @@ describe('MakeMigration', () => {
 
             setSchema(updatedSchema)
 
-            await plens(`makemigration --name second`)
+            await rays(`makemigration --name second`)
 
             setSchema(updatedSchema2)
 
-            await plens(`makemigration --name third`)
+            await rays(`makemigration --name third`)
 
             // ensure migration creation
             const migrationDirectories = getMigrationsDirs()
@@ -135,8 +135,8 @@ describe('MakeMigration', () => {
         }))
 
     test('Create blank migration file when no changes detected with blank option', withSchema({schema},
-        async ({plens, topology: {migrationsDir, schema}, raw, queryBuilder}) => {
-            await plens(`makemigration --name second --blank`)
+        async ({rays, topology: {migrationsDir, schema}, raw, queryBuilder}) => {
+            await rays(`makemigration --name second --blank`)
 
             // ensure migration creation
             const migrationDirectories = getMigrationsDirs()
@@ -163,8 +163,8 @@ describe('MakeMigration', () => {
         }))
 
     test('Do nothing when no changes detected without blank option', withSchema({schema},
-        async ({plens}) => {
-            await plens(`makemigration --name second`)
+        async ({rays}) => {
+            await rays(`makemigration --name second`)
 
             // ensure migration not created
             const migrationDirectories = getMigrationsDirs()

@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import processArguments from './processArguments'
 import * as engineProvider from './engineProvider'
 import { DEFAULT_CONFIG_FILE_NAME, UTF8 } from './constants'
-import type {ILogger, LensConfig} from "./types";
+import type {ILogger, RaysConfig} from "./types";
 
 const processArgs = processArguments()
 
@@ -13,7 +13,7 @@ const {
     databaseUrl,
     shadowDatabaseName,
     verboseLogging,
-} = require(path.resolve(processArgs.conf || DEFAULT_CONFIG_FILE_NAME)) as LensConfig
+} = require(path.resolve(processArgs.conf || DEFAULT_CONFIG_FILE_NAME)) as RaysConfig
 
 import { getDatabaseUrlEnvVarNameFromSchema } from './utils'
 
