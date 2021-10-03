@@ -16,7 +16,23 @@ export const getDatabaseUrlEnvVarNameFromSchema = (schema: string): string | und
 
 export const copyFile = async (source: string, dest: string) => {
 	if (fs.existsSync(dest)) {
-		await new Promise(resolve => fs.rm(dest, resolve))
+		await rm(dest)
 	}
-	await new Promise(resolve => fs.copyFile(source, dest, resolve))
+	await new Promise<void>((resolve, reject) => fs.copyFile(source, dest, (err) => { err ? reject() : resolve() }))
+}
+
+export const writeFile = async (path: string, data: string) => {
+	await new Promise<void>((resolve, reject) => fs.writeFile(path, data, (err) => { err ? reject() : resolve() }))
+}
+
+export const mkdir = async (path: string, options: fs.MakeDirectoryOptions = {}) => {
+	await new Promise<void>((resolve, reject) => fs.mkdir(path, options, (err) => { err ? reject() : resolve() }))
+}
+
+export const rm = async (path: string, options: fs.RmOptions = {}) => {
+	await new Promise<void>((resolve, reject) => fs.rm(path, options, (err) => { err ? reject() : resolve() }))
+}
+
+export const rmdir = async (path: string, options: fs.RmDirOptions = {}) => {
+	await new Promise<void>((resolve, reject) => fs.rmdir(path, options, (err) => { err ? reject() : resolve() }))
 }

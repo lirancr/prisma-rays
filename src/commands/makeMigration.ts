@@ -6,7 +6,7 @@ import * as fs from 'fs'
 import { getMigrationFolders, migrationsPath } from '../migrationFileUtils'
 import {dropAllTables, executeRaw, splitMultilineQuery} from '../dbcommands'
 import type {MakeMigrationCommand} from "../types"
-import { copyFile } from '../utils'
+import { copyFile, writeFile, mkdir, rm, rmdir } from '../utils'
 
 interface IMigrationScriptParams {
     migrationName: string
@@ -14,7 +14,7 @@ interface IMigrationScriptParams {
     execDown: string[]
 }
 
-const generateMigrationScript = ({ migrationName, execUp, execDown}: IMigrationScriptParams): void => {
+const generateMigrationScript = async ({ migrationName, execUp, execDown}: IMigrationScriptParams): Promise<void> => {
     const createExecuteCommands = (arr: string[]) => arr
         .map((cmd) => cmd.replace(/`/g, '\\`'))
         .map((cmd) => `await client.execute(\`${cmd}\`);`)
@@ -25,8 +25,12 @@ const generateMigrationScript = ({ migrationName, execUp, execDown}: IMigrationS
         .replace('$execUp', createExecuteCommands(execUp))
         .replace('$execDown', createExecuteCommands(execDown))
 
+    const migrationDir = path.join(migrationsPath, migrationName)
+    if (!fs.existsSync(migrationDir)) {
+        await mkdir(migrationDir, { recursive: true })
+    }
     const filepath = path.join(migrationsPath, migrationName, 'migration.js')
-    fs.writeFileSync(filepath, scriptData)
+    await writeFile(filepath, scriptData)
     commandSync(`npx prettier --write ${filepath}`)
 }
 
@@ -94,7 +98,7 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
                 logger.log('No schema changes detected. Creating blank migration')
             } else {
                 logger.log('No schema changes detected. Migration not created')
-                fs.rmSync(path.join(migrationsPath, newMigration), { recursive: true })
+                await rm(path.join(migrationsPath, newMigration), { recursive: true })
                 return null
             }
         }
@@ -117,11 +121,11 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
             migrationFileParams.execDown = splitMultilineQuery(fs.readFileSync(path.join(migrationsPath, revertMigration, 'migration.sql'), UTF8))
 
             // cleanup
-            fs.rmSync(path.join(migrationsPath, revertMigration), { recursive: true })
+            await rmdir(path.join(migrationsPath, revertMigration), { recursive: true })
             await copyFile(currentSchemaBackup, schema)
         }
 
-        generateMigrationScript(migrationFileParams)
+        await generateMigrationScript(migrationFileParams)
 
         await cleanup()
 
