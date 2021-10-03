@@ -72,11 +72,11 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
 
     try {
         // perform migration
-        const previousMigration = getMigrationFolders().pop()
+        const previousMigration = (await getMigrationFolders()).pop()
         logger.log('Creating up migration')
         prismaSync(`migrate dev --create-only --skip-seed --skip-generate --name ${name}`, shadowEnv)
 
-        const newMigration = getMigrationFolders().pop()
+        const newMigration = (await getMigrationFolders()).pop()
 
         if (!newMigration) {
             logger.log('migration creation aborted')
@@ -116,7 +116,7 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
             logger.log('Creating down migration')
             prismaSync(`migrate dev --create-only --skip-seed --skip-generate --name revert`, shadowEnv)
 
-            const revertMigration = getMigrationFolders().pop()!
+            const revertMigration = (await getMigrationFolders()).pop()!
 
             migrationFileParams.execDown = splitMultilineQuery(fs.readFileSync(path.join(migrationsPath, revertMigration, 'migration.sql'), UTF8))
 

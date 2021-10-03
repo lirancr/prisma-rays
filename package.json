@@ -1,6 +1,6 @@
 {
   "name": "prisma-rays",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Alternative migration client for prisma ORM",
   "main": "src/index.js",
   "scripts": {

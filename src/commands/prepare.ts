@@ -12,7 +12,7 @@ import { logger } from '../config'
  */
 const command: PrepareCommand = async (approveReset): Promise<void> => {
     // make sure we dont have existing migrations
-    if (getMigrationFolders().length > 0) {
+    if ((await getMigrationFolders()).length > 0) {
         throw new Error('Project already initialized (migrations folder is not empty)')
     }
 

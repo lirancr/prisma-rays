@@ -14,7 +14,7 @@ import type {IDatabaseConnection, IMigrationScript, MigrateCommand} from "../typ
  * @return {Promise<void>}
  */
 const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
-    const allMigrations = getMigrationFolders()
+    const allMigrations = await getMigrationFolders()
     const currentDbState = await getAppliedMigrations()
 
     logger.log('verifying migration/database sync state')
