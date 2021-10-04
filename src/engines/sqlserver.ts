@@ -9,6 +9,7 @@ const isEngineForUrl = (databaseUrl: string): boolean => {
 }
 
 const getDatabaseName = (databaseUrl: string): string => {
+	// TODO fix match
 	const dbName =  databaseUrl.match(/sqlserver:\/\/.+(?::.+)?@.+:[0-9]+\/(.+)/i)?.pop()
 	if (!dbName) {
 		throw new Error(`EngineError:sqlserver - databaseUrl did not match expected pattern: ${databaseUrl}`)
@@ -17,6 +18,7 @@ const getDatabaseName = (databaseUrl: string): string => {
 }
 
 const makeUrlForDatabase = (databaseUrl: string, dbName: string): string => {
+	// TODO fix replace
 	const url = databaseUrl.replace(/(sqlserver:\/\/.+(?::.+)?@.+:[0-9]+\/)(.+)/i, `$1${dbName}`)
 	if (!url.includes(dbName)) {
 		throw new Error(`EngineError:sqlserver - databaseUrl did not match expected pattern: ${databaseUrl}`)
@@ -32,6 +34,10 @@ const queryBuilderFactory: QueryBuilderFactory =  (databaseUrl) => {
 		insertInto: (table, values) => {
 			const entries = Object.entries(values)
 			return `INSERT INTO ${table} (${entries.map(e => e[0]).join(',')}) VALUES ('${entries.map(e => e[1]).join("','")}')`
+		},
+		updateAll: (table, values) => {
+			const entries = Object.entries(values)
+			return `UPDATE ${table} SET ${entries.map(([k, v]) => k+"='"+v+"'").join(',')};`
 		},
 		dropDatabaseIfExists: (db) => `DROP DATABASE IF EXISTS ${db};`,
 		createDatabase: (db) => `CREATE DATABASE ${db};`,
