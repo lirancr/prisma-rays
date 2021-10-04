@@ -59,3 +59,4 @@ export type MakeMigrationCommand = (name: string, blank?: boolean) => Promise<st
 export type MigrateCommand = (arg?: { name?: string, fake?: boolean }) => Promise<void>
 export type PrepareCommand = (approveReset: boolean) => Promise<void>
 export type StatusCommand = () => Promise<void>
+export type PushCommand = (approveReset: boolean) => Promise<void>

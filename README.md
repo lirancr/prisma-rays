@@ -36,6 +36,8 @@ Prisma Rays is heavily inspired by the UX given by the [Django](https://www.djan
 2. in your project's root directory run `npx rays init`
 3. Open the generated `raysconfig.js` file and update it according to your project's setup (see [Configuration](#configuration) section for details).
 
+if your project's database is brand new (i.e has no tables), make sure your prisma schema contain at least one model and run `npx rays push`
+
 If your project does not have existing migrations created from `prisma migrate` you can opt in to `prisma rays`
 by running `npx rays prepare`. Otherwise, see [Adding to existing projects](#adding-to-existing-projects)
 
@@ -238,6 +240,25 @@ mark un-applied migrations up/down to `myFirstMigration_20211109182020` as appli
 `npx rays migrate --name myFirstMigration_20211109182020 --fake`
 
 
+#### push
+
+`npx rays push <options>`
+
+Options:
+
+Option | Values | Required | description
+--- | --- | --- | ---
+y | None | No | approve database reset
+
+Reset your database to the current state of your schema, this mechanism does not use migrations api and instead
+rebuild the database based on the schema.
+This command usually required for new projects which never applied any schema to it
+
+**example usage:**
+
+`npx rays push --y`
+
+
 #### status
 
 `npx rays status`
@@ -327,7 +348,7 @@ If you're unhappy with Prisma Rays or simply want to go back to the built in `pr
 
 #### Error: P4001 The introspected database was empty while running rays prepare
 
-your database is empty so it cannot be used to generate the schema (maybe due to previous failure).
-Update your prisma schema to an initial point you want to support and run `npx prisma db push`.
+your database is empty so it cannot be used to generate the schema.
+Update your prisma schema to an initial point you want to support and run `npx rays push`.
 Then run `npx rays prepare` again
 

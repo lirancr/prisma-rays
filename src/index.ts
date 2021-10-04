@@ -1,4 +1,4 @@
-import type {InitCommand, MakeMigrationCommand, MigrateCommand, PrepareCommand, StatusCommand} from "./types"
+import type {InitCommand, MakeMigrationCommand, MigrateCommand, PrepareCommand, StatusCommand, PushCommand} from "./types"
 import processArguments from './processArguments'
 import verifyConfig from './verifyConfig'
 import { releaseConnections } from "./databaseConnectionPool"
@@ -27,6 +27,9 @@ const apiHelp: { [name: string]: () => unknown } = {
             ['fake', 'optional flag. If set, change the migration state without applying database changes.'],
         ])
     },
+    push: () => {
+        logHelp('push', 'Reset the database to the current schema state.')
+    },
     status: () => {
         logHelp('status', 'log the migration and schema status against the database structure')
     }
@@ -49,6 +52,11 @@ const commands: { [name: string]: () => Promise<unknown> } = {
         const args = processArguments()
         const fake = 'fake' in args
         return (require('./commands/migrate') as MigrateCommand)({ name: args.name, fake })
+    },
+    push: async () => {
+        const args = processArguments()
+        const approveReset = 'y' in args
+        return (require('./commands/push') as PushCommand)(approveReset)
     },
     status: async () => {
         return (require('./commands/status') as StatusCommand)()
