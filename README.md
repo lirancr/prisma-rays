@@ -8,6 +8,18 @@ prisma rays is a schema migration management tool built for [prisma ORM](https:/
 It is meant to be used as a drop in replacement to the builtin `prisma migrate` cli.
 Providing many management improvements and a more intuitive api.
 
+- Documentation
+   - [Why to use Prisma Rays](#why-to-use-prisma-rays)
+   - [Getting started](#getting-started)
+   - [Prisma rays workflow](#prisma-rays-workflow)
+   - [Configuration](#configuration)
+   - [Usage](#usage)
+   - [migration.js](#migrationjs)
+   - [Prisma Rays vs Prisma Migrate](#prisma-rays-vs-prisma-migrate)
+   - [Known limits and missing features](#known-limits-and-missing-features)
+   - [Going back to prisma migrate](#going-back-to-prisma-migrate)
+   - [Troubleshooting](#troubleshooting)
+
 ## Why to use Prisma Rays
 
 Fair question, the wonderful devs on [prisma migrate](https://www.prisma.io/migrate) have made a great job on the builtin migration tool.
