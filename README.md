@@ -279,10 +279,52 @@ these functions can be modified to perform different actions over your database 
 
 You can of course step in between commands to perform your own logic such as changing the data of your models and so on.
 
-Because of this `migration.js` files doesn't even need to run any structure changes sql at all. you can use a blank migration
+For data related operations. your up and down migrations receive a [client api](#client-api) object which can be used to interact with the
+database during the migration process.
+
+Because of this, `migration.js` files doesn't even need to run any structure changes sql at all. you can use a blank migration
 to apply database wide data manipulation.
 
 in addition to the migration script, prisma rays also create a copy of each migration step schema so it can be reverted to at any time.
+
+
+#### Client API
+
+The migration functions are given a `client` object which is connected to the database within the migration transaction.
+The client api is as follows:
+
+```typescript
+interface IDatabaseClientApi {
+   query: (query: string, params?: any[]) => Promise<unknown[]>
+   execute: (query: string, params?: any[]) => Promise<void>
+}
+```
+
+use `query` for command to SELECT data from your database, the result is an array of objects matching your query (i.e rows)
+
+use `execute` for commands that you do not expect to get result back for such as INSERT and UPDATE
+
+both functions accept a query string and an optional array of arguments to be safely escaped into the resulting query.
+
+**example usage** 
+
+query data with hard coded values (not recommended):
+
+`const rows = await query('SELECT * FROM users WHERE firstname = "John" AND lastname = "Doe"')`
+
+query data with parameters - use the `:?` markup as a parameter insertion point (useful when your parameters derive from unknown source such as user generated content in order to avoid SQL injection):
+
+`const rows = await query('SELECT * FROM users WHERE firstname = :? AND lastname = :?', ['John', 'Doe'])`
+
+**WARNING:** Do not build query string in runtime yourself based on uncontrolled data source (such as user provided data), doing so will expose your database do SQL injection
+and potential catastrophe
+
+for example **DO NOT DO THIS:**
+```
+const fname = ...
+const lname = ...
+const rows = await query('SELECT * FROM users WHERE firstname = "' + fname + '" AND lastname = " + lname + "')
+```
 
 ## Prisma Rays vs Prisma Migrate
 

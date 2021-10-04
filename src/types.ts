@@ -6,10 +6,13 @@ export interface RaysConfig {
     verboseLogging: boolean
 }
 
-export interface IDatabaseConnection {
+export interface IDatabaseClientApi {
+    query: (query: string, params?: any[]) => Promise<unknown[]>
+    execute: (query: string, params?: any[]) => Promise<void>
+}
+
+export interface IDatabaseConnection extends IDatabaseClientApi{
     disconnect: () => Promise<void>
-    query: (query: string) => Promise<unknown[]>
-    execute: (query: string) => Promise<unknown>
 }
 
 export interface IEngine {
@@ -30,6 +33,7 @@ export interface IQueryBuilder {
     deleteFromBy: (table: string, column: string, value: string) => string
     selectAllFrom: (table: string) =>  string
     insertInto: (table: string, values: { [column: string]: string }) => string
+    updateAll: (table: string, values: { [column: string]: string }) => string
     dropDatabaseIfExists: (db: string) => string
     createDatabase: (db: string) => string
     transactionBegin: () => string
@@ -42,8 +46,8 @@ export interface IQueryBuilder {
 }
 
 export interface IMigrationScript {
-    up: (arg: { client: IDatabaseConnection }) => Promise<unknown>
-    down: (arg: { client: IDatabaseConnection }) => Promise<unknown>
+    up: (arg: { client: IDatabaseClientApi }) => Promise<unknown>
+    down: (arg: { client: IDatabaseClientApi }) => Promise<unknown>
 }
 
 export interface ILogger {

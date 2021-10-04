@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import {getMigrationsDirs, TestFunction, withSchema} from "./testkit/testkit"
-import {PRISMA_MIGRATIONS_TABLE, UTF8} from "../src/constants";
+import {ENGINE_PARAM_PLACEHOLDER, PRISMA_MIGRATIONS_TABLE, UTF8} from "../src/constants";
 
 const schema = `
 model User {
@@ -64,6 +64,48 @@ describe('Migrate', () => {
                 firstname: 'John',
                 lastname: 'Doe',
                 initials: 'JD',
+            })
+        }))
+
+    test('Migrate with data changes', withSchema({ schema },
+        async (args) => {
+            const { rays, topology: { migrationsDir }, raw, queryBuilder } = args
+
+            await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
+
+            await rays('makemigration --name second --blank')
+
+            const migrations = getMigrationsDirs()
+
+            // add data modification script to migration file
+            const migrationScriptPath = path.join(migrationsDir, migrations[migrations.length - 1], 'migration.js')
+
+            const updateQuery = queryBuilder.updateAll('User', {
+                firstname: ENGINE_PARAM_PLACEHOLDER
+            }).replace(`'${ENGINE_PARAM_PLACEHOLDER}'`, ENGINE_PARAM_PLACEHOLDER)
+
+            fs.writeFileSync(migrationScriptPath, fs.readFileSync(migrationScriptPath, UTF8)
+                .replace(
+                    /const up = async \({ client }\) => {[\s\S]*?}/gm,
+                    // language=js
+                    `const up = async ({ client }) => {
+                        await client.execute('${updateQuery}', ['Jeff'])
+                    }`
+                ))
+
+            await rays('migrate')
+
+            // ensure migration was applied
+
+            const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
+                .map(m => m.migration_name)
+                .sort()
+
+            expect(appliedMigrations).toEqual(migrations)
+
+            expect(await getUserRecord(args)).toEqual({
+                id: expect.any(Number),
+                firstname: 'Jeff',
             })
         }))
 

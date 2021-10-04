@@ -1,6 +1,7 @@
 import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection, ILogger} from "../types";
 import * as connectionPool from '../databaseConnectionPool'
 import { Client } from 'pg'
+import {ENGINE_PARAM_PLACEHOLDER} from "../constants";
 
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^postgres(?:ql)?:\/\//i.test(databaseUrl)
@@ -38,6 +39,10 @@ const queryBuilderFactory: QueryBuilderFactory =  (databaseUrl: string) => {
 			const entries = Object.entries(values)
 			return `INSERT INTO ${schema}."${table}" (${entries.map(e => e[0]).join(',')}) VALUES ('${entries.map(e => e[1]).join("','")}')`
 		},
+		updateAll: (table, values) => {
+			const entries = Object.entries(values)
+			return `UPDATE ${schema}."${table}" SET ${entries.map(([k, v]) => k+"='"+v+"'").join(',')};`
+		},
 		dropDatabaseIfExists: (db) => `DROP DATABASE IF EXISTS ${db};`,
 		createDatabase: (db) => `CREATE DATABASE ${db};`,
 		transactionBegin: () => `BEGIN;`,
@@ -51,6 +56,13 @@ const queryBuilderFactory: QueryBuilderFactory =  (databaseUrl: string) => {
 	return queryBuilder
 }
 
+/**
+ * convert prisma rays param placeholder characters to the engine's one
+ */
+const normalizeQuery = (query: string): string => {
+	return query.split(ENGINE_PARAM_PLACEHOLDER).reduce((p, n, i) => `${p}$${i}${n}`)
+}
+
 const createConnection = async (databaseUrl: string, logger: ILogger): Promise<IDatabaseConnection> => {
 	const dbname = getDatabaseName(databaseUrl)
 	const client = new Client({
@@ -59,15 +71,14 @@ const createConnection = async (databaseUrl: string, logger: ILogger): Promise<I
 	await client.connect()
 
 	const connection: IDatabaseConnection = {
-		query: async (q) => {
-			logger.query(dbname, q)
-			const res = await client.query(q)
+		query: async (q, params) => {
+			logger.query(dbname, q, params)
+			const res = params ? await client.query(normalizeQuery(q), params) : await client.query(q)
 			return res.rows
 		},
-		execute: async (q) => {
-			logger.query(dbname, q)
-			const res = await client.query(q)
-			return res.rowCount
+		execute: async (q, params) => {
+			logger.query(dbname, q, params)
+			params ? await client.query(normalizeQuery(q), params) : await client.query(q)
 		},
 		disconnect: async () => {
 			connectionPool.removeConnection(connection)

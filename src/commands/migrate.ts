@@ -5,7 +5,7 @@ import { SCHEMA_FILE_NAME } from '../constants'
 import {schema, migrationsPath, queryBuilder, databaseEngine, logger, databaseUrl} from "../config";
 import * as path from 'path';
 import { copyFile } from '../utils'
-import type {IDatabaseConnection, IMigrationScript, MigrateCommand} from "../types";
+import type {IMigrationScript, MigrateCommand, IDatabaseClientApi, IDatabaseConnection} from "../types";
 
 /**
  *
@@ -63,7 +63,8 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
         const migrationScript: IMigrationScript = require(path.join(migrationsPath, migration, 'migration.js'))
         if (!fake) {
             const migrationCommand = migrateUp ? migrationScript.up : migrationScript.down
-            const client: IDatabaseConnection = await databaseEngine.createConnection(databaseUrl, logger)
+            const connection: IDatabaseConnection = await databaseEngine.createConnection(databaseUrl, logger)
+            const client: IDatabaseClientApi = { query: connection.query, execute: connection.execute  }
 
             try {
                 await executeRawOne(queryBuilder.transactionBegin())
@@ -74,7 +75,7 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
                 await executeRawOne(queryBuilder.transactionRollback())
                 throw e
             }
-            await client.disconnect()
+            await connection.disconnect()
         }
         await (migrateUp ? insertMigration(migration) : deleteMigration(migration))
 
