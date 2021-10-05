@@ -63,7 +63,7 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
         const migrationScript: IMigrationScript = require(path.join(migrationsPath, migration, 'migration.js'))
         if (!fake) {
             const migrationCommand = migrateUp ? migrationScript.up : migrationScript.down
-            const connection: IDatabaseConnection = await databaseEngine.createConnection(databaseUrl, logger)
+            const connection: IDatabaseConnection = await databaseEngine.createConnection(databaseUrl, logger, { schemaPath: schema })
             const client: IDatabaseClientApi = { query: connection.query, execute: connection.execute  }
 
             try {

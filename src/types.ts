@@ -15,6 +15,10 @@ export interface IDatabaseConnection extends IDatabaseClientApi{
     disconnect: () => Promise<void>
 }
 
+export interface IDatabaseTopology {
+    schemaPath: string,
+}
+
 export interface IEngine {
     /** matches the give url with the url pattern associated with the target database */
     isEngineForUrl: (databaseUrl: string) => boolean
@@ -23,7 +27,9 @@ export interface IEngine {
     /** extracts database name from it's url */
     getDatabaseName: (databaseUrl: string) => string
     queryBuilderFactory: QueryBuilderFactory
-    createConnection: (databaseUrl: string, logger: ILogger) => Promise<IDatabaseConnection>
+    createConnection: (databaseUrl: string, logger: ILogger, topology: IDatabaseTopology) => Promise<IDatabaseConnection>
+    isDatabaseOnFile: boolean
+    getDatabaseFilePath: (databaseUrl: string, topology: IDatabaseTopology) => string
 }
 
 export type QueryBuilderFactory = (databaseUrl: string) => IQueryBuilder

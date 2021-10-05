@@ -1,5 +1,5 @@
 import {PrismaClient} from "@prisma/client"
-import {verbose, databaseUrl, queryBuilder, databaseEngine, logger} from "./config"
+import {verbose, databaseUrl, queryBuilder, databaseEngine, logger, schema } from "./config"
 import { prismaSync } from './cmd'
 import { PRISMA_MIGRATIONS_TABLE, PRISMA_MIGRATION_NAME_COL } from "./constants";
 import {IDatabaseConnection} from "./types";
@@ -14,7 +14,7 @@ const createPrismaClient = (url:string): PrismaClient => new PrismaClient({
 })
 
 export const prisma = createPrismaClient(databaseUrl)
-const dbConnection = databaseEngine.createConnection(databaseUrl, logger)
+const dbConnection = databaseEngine.createConnection(databaseUrl, logger, { schemaPath: schema })
 
 export const executeRawOne = async (command: string, connection: Promise<IDatabaseConnection> = dbConnection): Promise<unknown> => {
     const client = await connection
@@ -85,7 +85,7 @@ export const splitMultilineQuery = (query: string): string[] => {
 }
 
 export const dropAllTables = async (databaseUrl: string): Promise<void> => {
-    const connection = databaseEngine.createConnection(databaseUrl, logger)
+    const connection = databaseEngine.createConnection(databaseUrl, logger, { schemaPath: schema })
     const client = await connection
     const preQuery = queryBuilder.setForeignKeyCheckOff()
     const postQuery = queryBuilder.setForeignKeyCheckOn()

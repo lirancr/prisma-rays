@@ -91,12 +91,16 @@ const createConnection = async (databaseUrl: string, logger: ILogger): Promise<I
 	return connection
 }
 
+const getDatabaseFilePath = () => ''
+
 const engine: IEngine = {
 	isEngineForUrl,
 	getDatabaseName,
 	makeUrlForDatabase,
 	queryBuilderFactory,
 	createConnection,
+	isDatabaseOnFile: false,
+	getDatabaseFilePath,
 }
 
 module.exports = engine

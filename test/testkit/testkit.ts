@@ -115,6 +115,19 @@ export const withSchema = (
             fs.rmSync(topology.raysconfig)
         }
 
+        const engine = engineProvider.engineFor(testOptions.env.DATABASE_URL)
+
+        const dbTopology = {
+            schemaPath: topology.schema,
+        }
+
+        if (engine.isDatabaseOnFile) {
+            fs.copyFileSync(
+                path.join('..','test-project','database.template.db'),
+                engine.getDatabaseFilePath(testOptions.env.DATABASE_URL, dbTopology)
+            )
+        }
+
         if (testOptions.init) {
             await rays('init')
 
@@ -148,7 +161,6 @@ export const withSchema = (
             }
         }
 
-        const engine = engineProvider.engineFor(testOptions.env.DATABASE_URL)
         const databaseName = engine.getDatabaseName(testOptions.env.DATABASE_URL)
         const queryBuilder = engine.queryBuilderFactory(testOptions.env.DATABASE_URL)
 
@@ -159,7 +171,7 @@ export const withSchema = (
                 error: () => {},
                 info: () => {},
                 query: () => {},
-            })
+            }, dbTopology)
 
         return testFn({
             rays,

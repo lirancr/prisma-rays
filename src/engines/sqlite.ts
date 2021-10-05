@@ -1,26 +1,27 @@
-import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection, ILogger} from "../types";
+import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection, ILogger, IDatabaseTopology} from "../types";
 import * as connectionPool from "../databaseConnectionPool"
-import mySQL from 'mysql2/promise'
+import * as sqlite3 from "sqlite3"
+import * as path from 'path'
 import {ENGINE_PARAM_PLACEHOLDER} from "../constants";
 
-const MYSQL2_PARAM_PLACEHOLDER = '?'
+const SQLITE3_PARAM_PLACEHOLDER = '?'
 
 const isEngineForUrl = (databaseUrl: string): boolean => {
-	return /^mysql:\/\//i.test(databaseUrl)
+	return /^file:/i.test(databaseUrl)
 }
 
 const getDatabaseName = (databaseUrl: string): string => {
-	const dbName =  databaseUrl.match(/mysql:\/\/.+(?::.+)?@.+:[0-9]+\/(.+)/i)?.pop()
+	const dbName =  databaseUrl.match(/file:.+\/(.+)/i)?.pop()
 	if (!dbName) {
-		throw new Error(`EngineError:mysql - databaseUrl did not match expected pattern: ${databaseUrl}`)
+		throw new Error(`EngineError:sqlite - databaseUrl did not match expected pattern: ${databaseUrl}`)
 	}
 	return dbName
 }
 
 const makeUrlForDatabase = (databaseUrl: string, dbName: string): string => {
-	const url = databaseUrl.replace(/(mysql:\/\/.+(?::.+)?@.+:[0-9]+\/)(.+)/i, `$1${dbName}`)
+	const url = databaseUrl.replace(/(file:.+\/)(.+)/i, `$1${dbName}`)
 	if (!url.includes(dbName)) {
-		throw new Error(`EngineError:mysql - databaseUrl did not match expected pattern: ${databaseUrl}`)
+		throw new Error(`EngineError:sqlite - databaseUrl did not match expected pattern: ${databaseUrl}`)
 	}
 	return url
 }
@@ -38,15 +39,15 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
 			const entries = Object.entries(values)
 			return `UPDATE ${table} SET ${entries.map(([k, v]) => k+"='"+v+"'").join(',')};`
 		},
-		dropDatabaseIfExists: (db) => `DROP DATABASE IF EXISTS ${db};`,
-		createDatabase: (db) => `CREATE DATABASE ${db};`,
+		dropDatabaseIfExists: () => ``,
+		createDatabase: () => ``,
 		transactionBegin: () => `BEGIN;`,
 		transactionCommit: () => `COMMIT;`,
 		transactionRollback: () => `ROLLBACK;`,
-		setForeignKeyCheckOn: () => `SET FOREIGN_KEY_CHECKS = 1;`,
-		setForeignKeyCheckOff: () => `SET FOREIGN_KEY_CHECKS = 0;`,
+		setForeignKeyCheckOn: () => `PRAGMA ignore_check_constraints = false;`,
+		setForeignKeyCheckOff: () => `PRAGMA ignore_check_constraints = true;`,
 		dropTableIfExistsCascade: (table) => `DROP TABLE IF EXISTS ${table};`,
-		selectAllTables: (db) => `SELECT table_name AS tablename FROM information_schema.tables WHERE table_schema = '${db}';`,
+		selectAllTables: () => `SELECT name AS tablename FROM sqlite_master WHERE type='table';`,
 	}
 
 	return queryBuilder
@@ -56,26 +57,33 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
  * convert prisma rays param placeholder characters to the engine's one
  */
 const normalizeQuery = (query: string): string => {
-	return query.replace(ENGINE_PARAM_PLACEHOLDER, MYSQL2_PARAM_PLACEHOLDER)
+	return query.replace(ENGINE_PARAM_PLACEHOLDER, SQLITE3_PARAM_PLACEHOLDER)
 }
 
-const createConnection = async (databaseUrl: string, logger: ILogger): Promise<IDatabaseConnection> => {
+const createConnection = async (databaseUrl: string, logger: ILogger, topology: IDatabaseTopology): Promise<IDatabaseConnection> => {
 	const dbname = getDatabaseName(databaseUrl)
-	const client = await mySQL.createConnection(databaseUrl)
+
+	const fileUrl = getDatabaseFilePath(databaseUrl, topology)
+	const client = new sqlite3.Database(fileUrl)
 
 	const connection: IDatabaseConnection = {
 		query: async (q, params) => {
 			logger.query(dbname, q, params)
-			const [rows] = params ? await client.query(normalizeQuery(q), params) : await client.query(q)
-			return rows as unknown[]
+			return new Promise<unknown[]>((resolve, reject) => {
+				const cb = (err: any, rows: unknown[]) => err ? reject(err) : resolve(rows)
+				params ? client.all(normalizeQuery(q), params, cb) : client.all(q, cb)
+			})
 		},
 		execute: async (q, params) => {
 			logger.query(dbname, q, params)
-			params ? await client.query(normalizeQuery(q), params) : await client.query(q)
+			await new Promise<void>((resolve, reject) => {
+				const cb = (err: any) => err ? reject(err) : resolve()
+				params ? client.run(normalizeQuery(q), params, cb) : client.run(q, cb)
+			})
 		},
-		disconnect: () => {
+		disconnect: async () => {
 			connectionPool.removeConnection(connection)
-			return client.end()
+			return client.close()
 		}
 	}
 
@@ -84,7 +92,10 @@ const createConnection = async (databaseUrl: string, logger: ILogger): Promise<I
 	return connection
 }
 
-const getDatabaseFilePath = () => ''
+const getDatabaseFilePath = (databaseUrl: string, { schemaPath }: IDatabaseTopology): string => {
+	const pathRelativeToPrismaSchema = databaseUrl.split(/^file:/i).pop()!
+	return path.join(path.dirname(schemaPath), pathRelativeToPrismaSchema)
+}
 
 const engine: IEngine = {
 	isEngineForUrl,
@@ -92,7 +103,7 @@ const engine: IEngine = {
 	makeUrlForDatabase,
 	queryBuilderFactory,
 	createConnection,
-	isDatabaseOnFile: false,
+	isDatabaseOnFile: true,
 	getDatabaseFilePath,
 }
 

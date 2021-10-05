@@ -57,6 +57,11 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
 
     if (isShadowDatabaseConfigured) {
         await dropAllTables(shadowDbUrl)
+    } else if (databaseEngine.isDatabaseOnFile) {
+        const dbFilePath = databaseEngine.getDatabaseFilePath(databaseUrl, { schemaPath: schema })
+        const shadowDbFilePath = databaseEngine.getDatabaseFilePath(shadowDbUrl, { schemaPath: schema })
+        await copyFile(dbFilePath, shadowDbFilePath)
+        await dropAllTables(shadowDbUrl)
     } else {
         await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
         await executeRaw(queryBuilder.createDatabase(shadowDbName))
@@ -65,6 +70,9 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
     const cleanup = async () => {
         if (isShadowDatabaseConfigured) {
             await dropAllTables(shadowDbUrl)
+        } else if (databaseEngine.isDatabaseOnFile) {
+            await rm(databaseEngine.getDatabaseFilePath(shadowDbUrl, { schemaPath: schema })
+        )
         } else {
             await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
         }
