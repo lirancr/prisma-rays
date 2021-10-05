@@ -1,6 +1,6 @@
 {
   "name": "prisma-rays",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Alternative migration client for prisma ORM",
   "main": "src/index.js",
   "scripts": {
@@ -28,6 +28,15 @@
   "engines": {
     "node": "14.15.x"
   },
+  "keywords": [
+    "prisma",
+    "rays",
+    "migrate",
+    "migration",
+    "orm",
+    "database",
+    "db"
+  ],
   "author": "lirancr",
   "license": "ISC",
   "dependencies": {

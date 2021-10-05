@@ -14,6 +14,7 @@ Providing many management improvements and a more intuitive api.
    - [Prisma rays workflow](#prisma-rays-workflow)
    - [Configuration](#configuration)
    - [Usage](#usage)
+   - [How it works](#how-it-works)
    - [migration.js](#migrationjs)
    - [Prisma Rays vs Prisma Migrate](#prisma-rays-vs-prisma-migrate)
    - [Known limits and missing features](#known-limits-and-missing-features)
@@ -276,6 +277,20 @@ This command usually required for new projects which never applied any schema to
 `npx rays status`
 
 log the migration and schema status against the database structure
+
+## How it works
+
+Prisma rays does not re-invent the wheel, it uses the same functionality as prisma migrate does but wrap the experience
+in a tighter package.
+
+It uses two dedicated / auto-generated shadow databases to achieve the desired outcome (will be referred to as `rays_shadow` and `prisma_shadow`).
+
+When creating migrations (either as part of `makemigrations` or `prepare`), prisma rays configure prisma migrate to treat the `rays_shadow` db as the
+working database instead of your real working database, this allows prisma rays to avoid making changes / resetting your working database.
+
+When applying/reverting migrations, prisma rays uses different engines ([pg](https://www.npmjs.com/package/pg), [mysql2](https://www.npmjs.com/package/mysql2), [mssql](https://www.npmjs.com/package/mssql)) depending on your database provider
+to execute migration queries and then mark the migration as applied/reverted using prisma migrate.
+
 
 ## migration.js
 
