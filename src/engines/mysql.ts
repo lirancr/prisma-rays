@@ -43,8 +43,8 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
 		transactionBegin: () => `BEGIN;`,
 		transactionCommit: () => `COMMIT;`,
 		transactionRollback: () => `ROLLBACK;`,
-		setForeignKeyCheckOn: () => `SET FOREIGN_KEY_CHECKS = 0;`,
-		setForeignKeyCheckOff: () => `SET FOREIGN_KEY_CHECKS = 1;`,
+		setForeignKeyCheckOn: () => `SET FOREIGN_KEY_CHECKS = 1;`,
+		setForeignKeyCheckOff: () => `SET FOREIGN_KEY_CHECKS = 0;`,
 		dropTableIfExistsCascade: (table) => `DROP TABLE IF EXISTS ${table};`,
 		selectAllTables: (db) => `SELECT table_name AS tablename FROM information_schema.tables WHERE table_schema = '${db}';`,
 	}

@@ -1,6 +1,6 @@
 {
   "name": "prisma-rays",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Alternative migration client for prisma ORM",
   "main": "src/index.js",
   "scripts": {
@@ -9,6 +9,7 @@
     "test": "npx jest --runInBand",
     "test:postgresql": "VERBOSE_LOGGING=true TEST_PROVIDER=postgresql TEST_DATABASE_URL=postgresql://postgres:root@localhost:5432/raystest?schema=public TEST_SHADOW_DATABASE_URL=postgresql://postgres:root@localhost:5432/prisma_shadow?schema=public TEST_SHADOW_DATABASE_NAME=raystest_shadow npx jest --runInBand",
     "test:mysql": "VERBOSE_LOGGING=true TEST_PROVIDER=mysql TEST_DATABASE_URL=mysql://root:root1234@127.0.0.1:3306/raystest TEST_SHADOW_DATABASE_URL=mysql://root:root1234@127.0.0.1:3306/prisma_shadow TEST_SHADOW_DATABASE_NAME=raystest_shadow npx jest --runInBand",
+    "test:sqlite": "VERBOSE_LOGGING=true TEST_PROVIDER=sqlite TEST_DATABASE_URL=file:../raystest.db TEST_SHADOW_DATABASE_URL=file:../prisma_shadow.db TEST_SHADOW_DATABASE_NAME=raystest_shadow npx jest --runInBand",
     "test:ci:postgresql": "TEST_PROVIDER=postgresql TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:5432/testdb TEST_SHADOW_DATABASE_URL=postgresql://postgres@127.0.0.1:5432/prisma_shadow TEST_SHADOW_DATABASE_NAME=rays_shadow npx jest --runInBand",
     "test:ci:mysql": "TEST_PROVIDER=mysql TEST_DATABASE_URL=mysql://root@127.0.0.1:3306/testdb TEST_SHADOW_DATABASE_URL=mysql://root@127.0.0.1:3306/prisma_shadow TEST_SHADOW_DATABASE_NAME=rays_shadow npx jest --runInBand"
   },
@@ -44,7 +45,8 @@
     "minimist": "^1.2.5",
     "mssql": "^7.2.1",
     "mysql2": "^2.3.0",
-    "pg": "^8.7.1"
+    "pg": "^8.7.1",
+    "sqlite3": "^5.0.2"
   },
   "devDependencies": {
     "@prisma/client": "^3.1.1",
@@ -54,6 +56,7 @@
     "@types/mssql": "^7.1.3",
     "@types/node": "^16.9.6",
     "@types/pg": "^8.6.1",
+    "@types/sqlite3": "^3.1.7",
     "jest": "^27.2.2",
     "prisma": "^3.1.1",
     "ts-jest": "^27.0.5",
