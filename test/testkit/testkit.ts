@@ -123,7 +123,7 @@ export const withSchema = (
 
         if (engine.isDatabaseOnFile) {
             fs.copyFileSync(
-                path.join('..','test-project','database.template.db'),
+                path.resolve('test','test-project','database.template.db'),
                 engine.getDatabaseFilePath(testOptions.env.DATABASE_URL, dbTopology)
             )
         }

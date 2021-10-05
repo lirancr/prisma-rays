@@ -6,3 +6,5 @@ package-lock.json
 test/test-project/prisma
 test/test-project/.env
 test/test-project/raysconfig.js
+*.db
+!test/test-project/database.template.db
