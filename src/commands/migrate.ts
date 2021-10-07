@@ -1,5 +1,5 @@
 import { getMigrationFolders } from "../migrationFileUtils";
-import { getAppliedMigrations, insertMigration, deleteMigration, executeRawOne } from '../dbcommands'
+import {getAppliedMigrations, insertMigration, deleteMigration, executeRawOne} from '../dbcommands'
 import { prismaSync } from "../cmd";
 import { SCHEMA_FILE_NAME } from '../constants'
 import {schema, migrationsPath, queryBuilder, databaseEngine, logger, databaseUrl} from "../config";
@@ -66,11 +66,10 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
             const connection: IDatabaseConnection = await databaseEngine.createConnection(databaseUrl, logger, { schemaPath: schema })
             const client: IDatabaseClientApi = { query: connection.query, execute: connection.execute  }
 
+            await executeRawOne(queryBuilder.transactionBegin())
             try {
-                await executeRawOne(queryBuilder.transactionBegin())
                 await migrationCommand({ client })
                 await executeRawOne(queryBuilder.transactionCommit())
-
             } catch (e) {
                 await executeRawOne(queryBuilder.transactionRollback())
                 throw e

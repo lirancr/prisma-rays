@@ -2,6 +2,7 @@ import {QueryBuilderFactory, IEngine, IQueryBuilder, IDatabaseConnection, ILogge
 import * as connectionPool from "../databaseConnectionPool"
 import * as sqlite3 from "sqlite3"
 import * as path from 'path'
+import * as fs from 'fs'
 import {ENGINE_PARAM_PLACEHOLDER} from "../constants";
 
 const SQLITE3_PARAM_PLACEHOLDER = '?'
@@ -11,15 +12,27 @@ const isEngineForUrl = (databaseUrl: string): boolean => {
 }
 
 const getDatabaseName = (databaseUrl: string): string => {
-	const dbName =  databaseUrl.match(/file:.+\/(.+)/i)?.pop()
-	if (!dbName) {
+	const dbFileName =  databaseUrl.match(/file:.+\/(.+)/i)?.pop()
+	if (!dbFileName) {
 		throw new Error(`EngineError:sqlite - databaseUrl did not match expected pattern: ${databaseUrl}`)
 	}
-	return dbName
+	const nameParts = dbFileName.split('.')
+	if (nameParts.length > 1) {
+		nameParts.pop()
+	}
+	return nameParts.join('.')
 }
 
 const makeUrlForDatabase = (databaseUrl: string, dbName: string): string => {
-	const url = databaseUrl.replace(/(file:.+\/)(.+)/i, `$1${dbName}`)
+	const dbFileName =  databaseUrl.match(/file:.+\/(.+)/i)?.pop()
+	if (!dbFileName) {
+		throw new Error(`EngineError:sqlite - databaseUrl did not match expected pattern: ${databaseUrl}`)
+	}
+	const nameParts = dbFileName.split('.')
+	const suffix = nameParts.length > 1 ? nameParts.pop() : null
+	const resultFileName = dbName + (suffix ? `.${suffix}` : '')
+
+	const url = databaseUrl.replace(/(file:.+\/)(.+)/i, `$1${resultFileName}`)
 	if (!url.includes(dbName)) {
 		throw new Error(`EngineError:sqlite - databaseUrl did not match expected pattern: ${databaseUrl}`)
 	}
@@ -41,13 +54,13 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
 		},
 		dropDatabaseIfExists: () => ``,
 		createDatabase: () => ``,
-		transactionBegin: () => `BEGIN;`,
-		transactionCommit: () => `COMMIT;`,
-		transactionRollback: () => `ROLLBACK;`,
+		transactionBegin: () => `BEGIN TRANSACTION;`,
+		transactionCommit: () => `COMMIT TRANSACTION;`,
+		transactionRollback: () => `ROLLBACK TRANSACTION;`,
 		setForeignKeyCheckOn: () => `PRAGMA ignore_check_constraints = false;`,
 		setForeignKeyCheckOff: () => `PRAGMA ignore_check_constraints = true;`,
 		dropTableIfExistsCascade: (table) => `DROP TABLE IF EXISTS ${table};`,
-		selectAllTables: () => `SELECT name AS tablename FROM sqlite_master WHERE type='table';`,
+		selectAllTables: () => `SELECT name AS tablename FROM sqlite_master WHERE type='table' AND name != 'sqlite_sequence';`,
 	}
 
 	return queryBuilder
@@ -63,21 +76,31 @@ const normalizeQuery = (query: string): string => {
 const createConnection = async (databaseUrl: string, logger: ILogger, topology: IDatabaseTopology): Promise<IDatabaseConnection> => {
 	const dbname = getDatabaseName(databaseUrl)
 
-	const fileUrl = getDatabaseFilePath(databaseUrl, topology)
+	const fileUrl = getDatabaseFilesPath(databaseUrl, topology).db
+
+	if (!fs.existsSync(fileUrl)) {
+		throw new Error(`EngineError:sqlite - databaseUrl not found: ${fileUrl}`)
+	}
+
 	const client = new sqlite3.Database(fileUrl)
+	client.serialize()
 
 	const connection: IDatabaseConnection = {
 		query: async (q, params) => {
 			logger.query(dbname, q, params)
 			return new Promise<unknown[]>((resolve, reject) => {
-				const cb = (err: any, rows: unknown[]) => err ? reject(err) : resolve(rows)
+				const cb = (err: any, rows: unknown[]) => {
+					err ? reject(err) : resolve(rows)
+				}
 				params ? client.all(normalizeQuery(q), params, cb) : client.all(q, cb)
 			})
 		},
 		execute: async (q, params) => {
 			logger.query(dbname, q, params)
 			await new Promise<void>((resolve, reject) => {
-				const cb = (err: any) => err ? reject(err) : resolve()
+				const cb = (err: any) => {
+					err ? reject(err) : resolve()
+				}
 				params ? client.run(normalizeQuery(q), params, cb) : client.run(q, cb)
 			})
 		},
@@ -92,9 +115,15 @@ const createConnection = async (databaseUrl: string, logger: ILogger, topology: 
 	return connection
 }
 
-const getDatabaseFilePath = (databaseUrl: string, { schemaPath }: IDatabaseTopology): string => {
+const getDatabaseFilesPath = (databaseUrl: string, { schemaPath }: IDatabaseTopology): { db: string, metafiles: string[] } => {
 	const pathRelativeToPrismaSchema = databaseUrl.split(/^file:/i).pop()!
-	return path.join(path.dirname(schemaPath), pathRelativeToPrismaSchema)
+	const db = path.join(path.dirname(schemaPath), pathRelativeToPrismaSchema)
+	return {
+		db,
+		metafiles: [
+			db + '-journal',
+		]
+	}
 }
 
 const engine: IEngine = {
@@ -104,7 +133,8 @@ const engine: IEngine = {
 	queryBuilderFactory,
 	createConnection,
 	isDatabaseOnFile: true,
-	getDatabaseFilePath,
+	getDatabaseFilesPath,
+	isTransactionsSupported : () => false
 }
 
 module.exports = engine

@@ -4,17 +4,6 @@ import {withSchema} from "./testkit/testkit"
 import {PRISMA_MIGRATIONS_TABLE} from "../src/constants";
 
 const schema = `
-model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-  title     String   @db.VarChar(255)
-  content   String?
-  published Boolean  @default(false)
-  authorId  Int
-  User      User     @relation(fields: [authorId], references: [id])
-}
-
 model Profile {
   id     Int     @id @default(autoincrement())
   bio    String?
@@ -26,7 +15,6 @@ model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   name      String?
-  Post      Post[]
   Profile   Profile?
 }
 `
@@ -43,7 +31,6 @@ describe('Prepare', () => {
             await rays('prepare --y')
 
             // create tables
-            expect(await raw.query(queryBuilder.selectAllFrom('Post'))).toEqual([])
             expect(await raw.query(queryBuilder.selectAllFrom('User'))).toEqual([])
             expect(await raw.query(queryBuilder.selectAllFrom('Profile'))).toEqual([])
 

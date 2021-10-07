@@ -5,6 +5,10 @@ import {ENGINE_PARAM_PLACEHOLDER} from "../constants";
 
 const MYSQL2_PARAM_PLACEHOLDER = '?'
 
+let transactionsSupported = true
+
+const isTransactionsSupported = () => transactionsSupported
+
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^mysql:\/\//i.test(databaseUrl)
 }
@@ -40,7 +44,7 @@ const queryBuilderFactory: QueryBuilderFactory =  () => {
 		},
 		dropDatabaseIfExists: (db) => `DROP DATABASE IF EXISTS ${db};`,
 		createDatabase: (db) => `CREATE DATABASE ${db};`,
-		transactionBegin: () => `BEGIN;`,
+		transactionBegin: () => `START TRANSACTION;`,
 		transactionCommit: () => `COMMIT;`,
 		transactionRollback: () => `ROLLBACK;`,
 		setForeignKeyCheckOn: () => `SET FOREIGN_KEY_CHECKS = 1;`,
@@ -63,6 +67,14 @@ const createConnection = async (databaseUrl: string, logger: ILogger): Promise<I
 	const dbname = getDatabaseName(databaseUrl)
 	const client = await mySQL.createConnection(databaseUrl)
 
+	try {
+		await client.query('SET autocommit = 0')
+		transactionsSupported = true
+	} catch (e) {
+		logger.warn('MySQL database version does not support disable autocommit and is unable to rollback failed queries')
+		transactionsSupported = false
+	}
+
 	const connection: IDatabaseConnection = {
 		query: async (q, params) => {
 			logger.query(dbname, q, params)
@@ -73,9 +85,9 @@ const createConnection = async (databaseUrl: string, logger: ILogger): Promise<I
 			logger.query(dbname, q, params)
 			params ? await client.query(normalizeQuery(q), params) : await client.query(q)
 		},
-		disconnect: () => {
+		disconnect: async () => {
 			connectionPool.removeConnection(connection)
-			return client.end()
+			await client.end()
 		}
 	}
 
@@ -84,7 +96,7 @@ const createConnection = async (databaseUrl: string, logger: ILogger): Promise<I
 	return connection
 }
 
-const getDatabaseFilePath = () => ''
+const getDatabaseFilesPath = () => ({ db: '', metafiles: [] })
 
 const engine: IEngine = {
 	isEngineForUrl,
@@ -93,7 +105,8 @@ const engine: IEngine = {
 	queryBuilderFactory,
 	createConnection,
 	isDatabaseOnFile: false,
-	getDatabaseFilePath,
+	getDatabaseFilesPath,
+	isTransactionsSupported,
 }
 
 module.exports = engine

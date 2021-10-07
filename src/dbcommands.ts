@@ -63,8 +63,12 @@ export const deleteMigration = async (name: string): Promise<unknown> => {
  * @return {Promise<Array<string>>}
  */
 export const getAppliedMigrations = async (): Promise<string[]> => {
-    const migrations = await queryRawOne(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE))
-    return migrations.map((migration: any) => migration[PRISMA_MIGRATION_NAME_COL]).sort()
+    try {
+        const migrations = await queryRawOne(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE))
+        return migrations.map((migration: any) => migration[PRISMA_MIGRATION_NAME_COL]).sort()
+    } catch (e) {
+        return []
+    }
 }
 
 /**
@@ -85,6 +89,7 @@ export const splitMultilineQuery = (query: string): string[] => {
 }
 
 export const dropAllTables = async (databaseUrl: string): Promise<void> => {
+    logger.log('dropping all tables from', databaseUrl)
     const connection = databaseEngine.createConnection(databaseUrl, logger, { schemaPath: schema })
     const client = await connection
     const preQuery = queryBuilder.setForeignKeyCheckOff()
@@ -110,11 +115,11 @@ export const executeRaw = async (query: string, connection: Promise<IDatabaseCon
     const client = await connection
     await client.execute(queryBuilder.transactionBegin())
     try {
-        await client.execute(queryBuilder.transactionCommit())
         let res
         for (const cmd of commands) {
             res = await client.execute(cmd)
         }
+        await client.execute(queryBuilder.transactionCommit())
         return res
     } catch (e) {
         await client.execute(queryBuilder.transactionRollback())

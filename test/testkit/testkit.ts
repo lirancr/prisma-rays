@@ -26,6 +26,7 @@ export type TestFunction = (testkit: {
         raysconfig: string,
     },
     queryBuilder: IQueryBuilder,
+    transactionsSupported: boolean
     raw: {
         query: (query: string, databaseName?: string) => Promise<any>,
         execute: (query: string, databaseName?: string) => Promise<any>
@@ -124,7 +125,7 @@ export const withSchema = (
         if (engine.isDatabaseOnFile) {
             fs.copyFileSync(
                 path.resolve('test','test-project','database.template.db'),
-                engine.getDatabaseFilePath(testOptions.env.DATABASE_URL, dbTopology)
+                engine.getDatabaseFilesPath(testOptions.env.DATABASE_URL, dbTopology).db
             )
         }
 
@@ -173,6 +174,7 @@ export const withSchema = (
                 query: () => {},
             }, dbTopology)
 
+        await databaseConnectionProvider(databaseName)
         return testFn({
             rays,
             setSchema,
@@ -180,6 +182,7 @@ export const withSchema = (
             exec,
             queryBuilder,
             shadowDatabaseName: process.env.TEST_SHADOW_DATABASE_NAME,
+            transactionsSupported: engine.isTransactionsSupported(),
             raw: {
                 query: async (command: string, _databaseName: string = databaseName): Promise<any> => {
                     const client = await databaseConnectionProvider(_databaseName)

@@ -29,7 +29,8 @@ export interface IEngine {
     queryBuilderFactory: QueryBuilderFactory
     createConnection: (databaseUrl: string, logger: ILogger, topology: IDatabaseTopology) => Promise<IDatabaseConnection>
     isDatabaseOnFile: boolean
-    getDatabaseFilePath: (databaseUrl: string, topology: IDatabaseTopology) => string
+    getDatabaseFilesPath: (databaseUrl: string, topology: IDatabaseTopology) => { db: string, metafiles: string[] }
+    isTransactionsSupported: () => boolean
 }
 
 export type QueryBuilderFactory = (databaseUrl: string) => IQueryBuilder

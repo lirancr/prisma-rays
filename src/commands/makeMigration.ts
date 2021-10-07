@@ -58,8 +58,8 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
     if (isShadowDatabaseConfigured) {
         await dropAllTables(shadowDbUrl)
     } else if (databaseEngine.isDatabaseOnFile) {
-        const dbFilePath = databaseEngine.getDatabaseFilePath(databaseUrl, { schemaPath: schema })
-        const shadowDbFilePath = databaseEngine.getDatabaseFilePath(shadowDbUrl, { schemaPath: schema })
+        const dbFilePath = databaseEngine.getDatabaseFilesPath(databaseUrl, { schemaPath: schema }).db
+        const shadowDbFilePath = databaseEngine.getDatabaseFilesPath(shadowDbUrl, { schemaPath: schema }).db
         await copyFile(dbFilePath, shadowDbFilePath)
         await dropAllTables(shadowDbUrl)
     } else {
@@ -68,18 +68,25 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
     }
 
     const cleanup = async () => {
+        await Promise.all(
+            databaseEngine.getDatabaseFilesPath(shadowDbUrl, { schemaPath: schema }).metafiles
+            .map((f) => {
+                logger.log('removing metafile', f)
+                return rm(f)
+            }))
+
         if (isShadowDatabaseConfigured) {
             await dropAllTables(shadowDbUrl)
         } else if (databaseEngine.isDatabaseOnFile) {
-            await rm(databaseEngine.getDatabaseFilePath(shadowDbUrl, { schemaPath: schema })
-        )
+            logger.log('removing database file', shadowDbUrl)
+            await rm(databaseEngine.getDatabaseFilesPath(shadowDbUrl, { schemaPath: schema }).db)
         } else {
             await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
         }
     }
 
     try {
-        // perform migration
+        // create migration
         const previousMigration = (await getMigrationFolders()).pop()
         logger.log('Creating up migration')
         prismaSync(`migrate dev --create-only --skip-seed --skip-generate --name ${name}`, shadowEnv)

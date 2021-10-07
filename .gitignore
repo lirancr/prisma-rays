@@ -7,4 +7,5 @@ test/test-project/prisma
 test/test-project/.env
 test/test-project/raysconfig.js
 *.db
+*.db-journal
 !test/test-project/database.template.db
