@@ -20,6 +20,7 @@ Providing many management improvements and a more intuitive api.
    - [Known limits and missing features](#known-limits-and-missing-features)
    - [Going back to prisma migrate](#going-back-to-prisma-migrate)
    - [Troubleshooting](#troubleshooting)
+   - [Upgrade from 1.x](#upgrade-from-1x)
 
 ## Why to use Prisma Rays
 
@@ -295,24 +296,42 @@ to execute migration queries and then mark the migration as applied/reverted usi
 ## migration.js
 
 Prisma Rays work with javascript files to manage migrations. Each migration file (a.k.a step)
-exposes too functions:
+exports an array of operation tuples:
 
-- up - run during forward migration
-- down - run during backward migration
+Each tuple contain two functions:
+- up (0) - run during forward migration
+- down (1) - run during backward migration
 
-these functions can be modified to perform different actions over your database with one exception:
+you can add additional operation tuples to perform different actions over your database with one exception:
 - do not change the database structure or modify the generated sql calls in the migration script.
   why ? because those bits of code must be aligned with the generated `migration.sql` which `prisma migrate` depends on.
 
-You can of course step in between commands to perform your own logic such as changing the data of your models and so on.
+You can of course step in between operations to perform your own logic such as changing the data of your models and so on.
 
-For data related operations. your up and down migrations receive a [client api](#client-api) object which can be used to interact with the
+For data related operations. your up and down operations receive a [client api](#client-api) object which can be used to interact with the
 database during the migration process.
 
 Because of this, `migration.js` files doesn't even need to run any structure changes sql at all. you can use a blank migration
 to apply database wide data manipulation.
 
-in addition to the migration script, prisma rays also create a copy of each migration step schema so it can be reverted to at any time.
+in addition to the migration script, prisma rays also create a copy of each migration step schema, so it can be reverted to at any time.
+
+here are some examples of typical migration scripts (written as helper functions for readability :
+
+```javascript
+module.exports = [
+    [createUsersTable, dropUsersTable],
+    [createPostsTable, dropPostsTable],
+    [createConstraint, dropConstraint],
+]
+```
+
+```javascript
+module.exports = [
+    [setUserNameDefaultValue, replaceDefaultUserNameValueWithNull],
+    [makeUserNameNonNull, makeUserNameNullable],
+]
+```
 
 
 #### Client API
@@ -421,3 +440,50 @@ your database is empty so it cannot be used to generate the schema.
 Update your prisma schema to an initial point you want to support and run `npx rays push`.
 Then run `npx rays prepare` again
 
+
+
+## Upgrade from 1.x
+
+If you wish to keep your migrations from v1 of prisma rays you can manually convert them to v2 format by following this process:
+
+Make your `module.exports` be an array, each item in the array should be an array with two items in it.
+
+take each execute call from your up script, wrap it in a function with similar signature as the up function and put it as the first item
+of the inner array in the module exports (create as many arrays as you need to fit all your operations)
+
+take each execute call from your down script, wrap it in a function with similar signature as the down function and put it as the second item
+of the inner array in the module exports - fit the down execute function to the down function so the two items are forward and reverse operations
+on the same database entity.
+
+It might be easier to just show a comparison of the two formats to understand the difference:
+
+v1.x format
+```javascript
+const up = async ({ client }) => {
+    await client.execute(`+A`)
+    await client.execute(`+B`)
+}
+
+const down = async ({ client }) => {
+    await client.execute(`-B`)
+    await client.execute(`-A`)
+}
+
+module.exports = { up, down }
+```
+
+v2.x format
+```javascript
+module.exports = [
+    [ 
+        // up and down changes to A
+        async ({ client }) => { await client.execute(`+A`) },
+        async ({ client }) => { await client.execute(`-A`) }
+    ],
+    [
+        // up and down changes to B
+        async ({ client }) => { await client.execute(`+B`) },
+        async ({ client }) => { await client.execute(`-B`) }
+    ]
+]
+```

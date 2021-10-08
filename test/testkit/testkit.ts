@@ -4,6 +4,7 @@ import execa from 'execa'
 import * as engineProvider from '../../src/engineProvider'
 import {UTF8} from "../../src/constants"
 import type {IQueryBuilder} from "../../src/types";
+import _ from 'lodash'
 
 const testProjectPath = path.join(__dirname, '..', 'test-project')
 
@@ -25,8 +26,7 @@ export type TestFunction = (testkit: {
         schema: string,
         raysconfig: string,
     },
-    queryBuilder: IQueryBuilder,
-    transactionsSupported: boolean
+    queryBuilder: IQueryBuilder
     raw: {
         query: (query: string, databaseName?: string) => Promise<any>,
         execute: (query: string, databaseName?: string) => Promise<any>
@@ -174,7 +174,6 @@ export const withSchema = (
                 query: () => {},
             }, dbTopology)
 
-        await databaseConnectionProvider(databaseName)
         return testFn({
             rays,
             setSchema,
@@ -182,7 +181,6 @@ export const withSchema = (
             exec,
             queryBuilder,
             shadowDatabaseName: process.env.TEST_SHADOW_DATABASE_NAME,
-            transactionsSupported: engine.isTransactionsSupported(),
             raw: {
                 query: async (command: string, _databaseName: string = databaseName): Promise<any> => {
                     const client = await databaseConnectionProvider(_databaseName)
@@ -217,7 +215,11 @@ export const verifyMigrationFiles = (name: string) => {
     expect(fs.existsSync(path.join(topology.migrationsDir, name, 'migration.sql'))).toEqual(true)
 
     const migrationScript = require(path.join(topology.migrationsDir, name, 'migration.js'))
-    expect(Object.keys(migrationScript)).toEqual(['up', 'down'])
+    expect(Array.isArray(migrationScript)).toEqual(true)
+    if (migrationScript.length > 0) {
+        expect(Array.isArray(migrationScript[0])).toEqual(true)
+        expect(migrationScript[0].find((fn: any) => !_.isFunction(fn))).not.toBeDefined()
+    }
 }
 
 export const getMigrationsDirs = (): string[] => {

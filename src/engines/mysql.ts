@@ -5,10 +5,6 @@ import {ENGINE_PARAM_PLACEHOLDER} from "../constants";
 
 const MYSQL2_PARAM_PLACEHOLDER = '?'
 
-let transactionsSupported = true
-
-const isTransactionsSupported = () => transactionsSupported
-
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^mysql:\/\//i.test(databaseUrl)
 }
@@ -67,14 +63,6 @@ const createConnection = async (databaseUrl: string, logger: ILogger): Promise<I
 	const dbname = getDatabaseName(databaseUrl)
 	const client = await mySQL.createConnection(databaseUrl)
 
-	try {
-		await client.query('SET autocommit = 0')
-		transactionsSupported = true
-	} catch (e) {
-		logger.warn('MySQL database version does not support disable autocommit and is unable to rollback failed queries')
-		transactionsSupported = false
-	}
-
 	const connection: IDatabaseConnection = {
 		query: async (q, params) => {
 			logger.query(dbname, q, params)
@@ -106,7 +94,6 @@ const engine: IEngine = {
 	createConnection,
 	isDatabaseOnFile: false,
 	getDatabaseFilesPath,
-	isTransactionsSupported,
 }
 
 module.exports = engine

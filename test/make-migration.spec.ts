@@ -4,12 +4,26 @@ import {getMigrationsDirs, verifyMigrationFiles, withSchema} from "./testkit/tes
 import {PRISMA_MIGRATIONS_TABLE, UTF8} from "../src/constants";
 
 const schema = `
+model Address {
+  id        Int      @id @default(autoincrement())
+  houseNumber      Int
+  street      String? @default("Doe")
+  city      String? @default("JD")
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   firstname      String
 }`
 
 const updatedSchema = `
+model Address {
+  id        Int      @id @default(autoincrement())
+  houseNumber      Int
+  street      String? @default("Doe")
+  city      String
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   firstname      String
@@ -17,9 +31,17 @@ model User {
 }`
 
 const updatedSchema2 = `
+model Address {
+  id        Int      @id @default(autoincrement())
+  houseNumber      Int
+  street      String
+  city      String? @default("NY")
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   firstname      String
+  nickname      String? @default("DJ")
   lastname      String? @default("Doe")
   initials      String? @default("JD")
 }`
@@ -86,7 +108,7 @@ describe('MakeMigration', () => {
             expect(migrationSQL).not.toEqual('-- This is an empty migration.')
         }))
 
-    test('Create multiple migration files without applying', withSchema({schema},
+    test.only('Create multiple migration files without applying', withSchema({schema},
         async ({rays, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder}) => {
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))

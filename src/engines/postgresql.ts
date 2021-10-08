@@ -3,10 +3,6 @@ import * as connectionPool from '../databaseConnectionPool'
 import { Client } from 'pg'
 import {ENGINE_PARAM_PLACEHOLDER} from "../constants";
 
-let transactionsSupported = true
-
-const isTransactionsSupported = () => transactionsSupported
-
 const isEngineForUrl = (databaseUrl: string): boolean => {
 	return /^postgres(?:ql)?:\/\//i.test(databaseUrl)
 }
@@ -74,14 +70,6 @@ const createConnection = async (databaseUrl: string, logger: ILogger): Promise<I
 	})
 	await client.connect()
 
-	try {
-		await client.query(`SET AUTOCOMMIT TO OFF`)
-		transactionsSupported = true
-	} catch (e) {
-		logger.warn('Postgres database version does not support disabling autocommit and is unable to rollback failed queries')
-		transactionsSupported = false
-	}
-
 	const connection: IDatabaseConnection = {
 		query: async (q, params) => {
 			logger.query(dbname, q, params)
@@ -113,7 +101,6 @@ const engine: IEngine = {
 	createConnection,
 	isDatabaseOnFile: false,
 	getDatabaseFilesPath,
-	isTransactionsSupported,
 }
 
 module.exports = engine

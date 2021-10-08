@@ -30,7 +30,6 @@ export interface IEngine {
     createConnection: (databaseUrl: string, logger: ILogger, topology: IDatabaseTopology) => Promise<IDatabaseConnection>
     isDatabaseOnFile: boolean
     getDatabaseFilesPath: (databaseUrl: string, topology: IDatabaseTopology) => { db: string, metafiles: string[] }
-    isTransactionsSupported: () => boolean
 }
 
 export type QueryBuilderFactory = (databaseUrl: string) => IQueryBuilder
@@ -52,10 +51,9 @@ export interface IQueryBuilder {
     selectAllTables: (db: string) => string
 }
 
-export interface IMigrationScript {
-    up: (arg: { client: IDatabaseClientApi }) => Promise<unknown>
-    down: (arg: { client: IDatabaseClientApi }) => Promise<unknown>
-}
+type MigrationOperation = (arg: { client: IDatabaseClientApi }) => Promise<never>
+
+export type IMigrationScript = Array<[MigrationOperation, MigrationOperation]>
 
 export interface ILogger {
     log: (...args: any) => void

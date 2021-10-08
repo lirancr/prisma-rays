@@ -134,7 +134,6 @@ const engine: IEngine = {
 	createConnection,
 	isDatabaseOnFile: true,
 	getDatabaseFilesPath,
-	isTransactionsSupported : () => false
 }
 
 module.exports = engine

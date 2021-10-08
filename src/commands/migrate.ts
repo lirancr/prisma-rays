@@ -61,20 +61,41 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
     for (let migration of migrationsToApply) {
         logger.log(fake ? 'Fake -' : '', migrateUp ? 'Applying' : 'Reverting','migration -', migration)
         const migrationScript: IMigrationScript = require(path.join(migrationsPath, migration, 'migration.js'))
+        const operations = migrateUp ? migrationScript : migrationScript.map((upDown) => upDown.reverse()).reverse()
         if (!fake) {
-            const migrationCommand = migrateUp ? migrationScript.up : migrationScript.down
             const connection: IDatabaseConnection = await databaseEngine.createConnection(databaseUrl, logger, { schemaPath: schema })
             const client: IDatabaseClientApi = { query: connection.query, execute: connection.execute  }
 
-            await executeRawOne(queryBuilder.transactionBegin())
-            try {
-                await migrationCommand({ client })
-                await executeRawOne(queryBuilder.transactionCommit())
-            } catch (e) {
-                await executeRawOne(queryBuilder.transactionRollback())
-                throw e
+            let migrationError = null
+            let lastSuccessfulOperationIndex = -1
+            while (lastSuccessfulOperationIndex < operations.length - 1) {
+                try {
+                    await executeRawOne(queryBuilder.transactionBegin())
+                    await operations[lastSuccessfulOperationIndex + 1][0]({client})
+                    await executeRawOne(queryBuilder.transactionCommit())
+                    lastSuccessfulOperationIndex++
+                } catch (e) {
+                    await executeRawOne(queryBuilder.transactionRollback())
+                    logger.error(`Migration failed [index: ${lastSuccessfulOperationIndex + 1}]:`, e)
+                    migrationError = e
+                    break
+                }
             }
+
+            if (migrationError) {
+                logger.log('Rolling back migration operations')
+                // rollback
+                while (lastSuccessfulOperationIndex > -1) {
+                    await operations[lastSuccessfulOperationIndex][1]({client})
+                    lastSuccessfulOperationIndex--
+                }
+            }
+
             await connection.disconnect()
+
+            if (migrationError) {
+                throw migrationError
+            }
         }
         await (migrateUp ? insertMigration(migration) : deleteMigration(migration))
 

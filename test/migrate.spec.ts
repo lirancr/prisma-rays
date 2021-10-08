@@ -84,14 +84,14 @@ describe('Migrate', () => {
                 firstname: ENGINE_PARAM_PLACEHOLDER
             }).replace(`'${ENGINE_PARAM_PLACEHOLDER}'`, ENGINE_PARAM_PLACEHOLDER)
 
-            fs.writeFileSync(migrationScriptPath, fs.readFileSync(migrationScriptPath, UTF8)
-                .replace(
-                    /const up = async \({ client }\) => {[\s\S]*?}/gm,
-                    // language=js
-                    `const up = async ({ client }) => {
-                        await client.execute('${updateQuery}', ['Jeff'])
-                    }`
-                ))
+            fs.writeFileSync(migrationScriptPath,
+                // language=js
+                `module.exports = [
+                    [
+                        async ({ client }) => { await client.execute('${updateQuery}', ['Jeff']) },
+                        async ({ client }) => { await client.execute('${updateQuery}', ['Failed']) }
+                    ]
+                ]`)
 
             await rays('migrate')
 
@@ -198,14 +198,10 @@ describe('Migrate', () => {
             })
         }))
 
-    test('Run migration in transaction', withSchema({ schema },
+    test('Rollback failed migration operations', withSchema({ schema },
         async (args) => {
 
-            const { rays, topology: { migrationsDir }, transactionsSupported, raw, queryBuilder } = args
-
-            if (!transactionsSupported) {
-                return
-            }
+            const { rays, topology: { migrationsDir }, raw, queryBuilder } = args
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
@@ -222,15 +218,18 @@ describe('Migrate', () => {
                 firstname: ENGINE_PARAM_PLACEHOLDER
             }).replace(`'${ENGINE_PARAM_PLACEHOLDER}'`, ENGINE_PARAM_PLACEHOLDER)
 
-            fs.writeFileSync(migrationScriptPath, fs.readFileSync(migrationScriptPath, UTF8)
-                .replace(
-                    /const up = async \({ client }\) => {[\s\S]*?}/gm,
-                    // language=js
-                    `const up = async ({ client }) => {
-                        await client.execute('${updateQuery}', ['Jeff'])
-                        throw new Error('Migration failure')
-                    }`
-                ))
+            fs.writeFileSync(migrationScriptPath,
+                // language=js
+                `module.exports = [
+                    [
+                        async ({ client }) => { await client.execute('${updateQuery}', ['Jeff']) },
+                        async ({ client }) => { await client.execute('${updateQuery}', ['Failed']) }
+                    ],
+                    [
+                        async () => { throw new Error('failed')},
+                        async () => {}
+                    ]
+                ]`)
 
             let failed = false
             try {
@@ -247,6 +246,66 @@ describe('Migrate', () => {
                 .sort()
 
             expect(appliedMigrations).toEqual(migrationsBeforeMakeMigration)
+
+            expect(await getUserRecord(args)).toEqual({
+                id: expect.any(Number),
+                firstname: 'Failed',
+            })
+        }))
+
+    test('Rollback failed down migration operations', withSchema({ schema },
+        async (args) => {
+
+            const { rays, topology: { migrationsDir }, raw, queryBuilder } = args
+
+            await raw.execute(queryBuilder.insertInto('User', { firstname: 'Jeff' }))
+
+            await rays('makemigration --name second --blank')
+
+            const migrations = getMigrationsDirs()
+
+            // add data modification script to migration file
+            const migrationScriptPath = path.join(migrationsDir, migrations[migrations.length - 1], 'migration.js')
+
+            const updateQuery = queryBuilder.updateAll('User', {
+                firstname: ENGINE_PARAM_PLACEHOLDER
+            }).replace(`'${ENGINE_PARAM_PLACEHOLDER}'`, ENGINE_PARAM_PLACEHOLDER)
+
+            fs.writeFileSync(migrationScriptPath,
+                // language=js
+                `module.exports = [
+                    [
+                        async () => {},
+                        async () => { throw new Error('failed')}
+                    ],
+                    [
+                        async ({ client }) => { await client.execute('${updateQuery}', ['John']) },
+                        async ({ client }) => { await client.execute('${updateQuery}', ['Jeff']) }
+                    ]
+                ]`)
+
+            await rays('migrate')
+
+            expect(await getUserRecord(args)).toEqual({
+                id: expect.any(Number),
+                firstname: 'John',
+            })
+
+            let failed = false
+            try {
+                await rays('migrate --name ' + migrations[0])
+            } catch (e) {
+                failed = true
+            }
+
+            expect(failed).toEqual(true)
+
+            // ensure reverse migration not applied
+            const appliedMigrations: string[] = (await raw.query(queryBuilder.selectAllFrom(PRISMA_MIGRATIONS_TABLE)) as any[])
+                .map(m => m.migration_name)
+                .sort()
+
+            expect(appliedMigrations).toEqual(migrations)
 
             expect(await getUserRecord(args)).toEqual({
                 id: expect.any(Number),

@@ -15,15 +15,30 @@ interface IMigrationScriptParams {
 }
 
 const generateMigrationScript = async ({ migrationName, execUp, execDown}: IMigrationScriptParams): Promise<void> => {
-    const createExecuteCommands = (arr: string[]) => arr
-        .map((cmd) => cmd.replace(/`/g, '\\`'))
-        .map((cmd) => `await client.execute(\`${cmd}\`);`)
-        .join('\n')
+
+    const createExecuteCommand = (cmd: string = ''): string => {
+        const command = cmd.replace(/`/g, '\\`')
+        const execute = command ? `await client.execute(\`${command}\`)` : ''
+        return `async ({ client }) => { ${execute} }`
+    }
+
+    const createExecuteCommands = (up: string[], down: string[]) => {
+        let opsUp = up
+        let opsDown = down
+        if (up.length !== down.length) {
+            logger.warn('Migration operations for up and down have different amount of operations, migration will be joined into a single operation')
+            opsUp = [up.join(`;\n`)]
+            opsDown = [down.join(`;\n`)]
+        }
+
+        return opsUp.map((_, i) => {
+            return `[${createExecuteCommand(opsUp[i])}, ${createExecuteCommand(opsDown[i])}],`
+        }).join('\n')
+    }
 
     const scriptData = fs.readFileSync(path.join(__dirname, '..', 'templates', 'migration.template.js'), UTF8)
         .replace('$migrationName', migrationName)
-        .replace('$execUp', createExecuteCommands(execUp))
-        .replace('$execDown', createExecuteCommands(execDown))
+        .replace('$operations', createExecuteCommands(execUp, execDown))
 
     const migrationDir = path.join(migrationsPath, migrationName)
     if (!fs.existsSync(migrationDir)) {
