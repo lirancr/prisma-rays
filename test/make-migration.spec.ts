@@ -108,7 +108,7 @@ describe('MakeMigration', () => {
             expect(migrationSQL).not.toEqual('-- This is an empty migration.')
         }))
 
-    test.only('Create multiple migration files without applying', withSchema({schema},
+    test('Create multiple migration files without applying', withSchema({schema},
         async ({rays, topology: {migrationsDir, schema}, setSchema, raw, queryBuilder}) => {
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
