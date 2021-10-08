@@ -1,4 +1,4 @@
-import { prismaSync, commandSync } from '../cmd'
+import {prismaSync, commandSync, ask} from '../cmd'
 import { UTF8, SCHEMA_FILE_NAME } from '../constants'
 import { schema, databaseUrl, shadowDatabaseName, databaseUrlEnvVarName, databaseEngine, queryBuilder, logger } from '../config'
 import * as path from 'path'
@@ -22,13 +22,9 @@ const generateMigrationScript = async ({ migrationName, execUp, execDown}: IMigr
         return `async ({ client }) => { ${execute} }`
     }
 
-    const createExecuteCommands = (up: string[], down: string[]) => {
-        let opsUp = up
-        let opsDown = down
-        if (up.length !== down.length) {
-            logger.warn('Migration operations for up and down have different amount of operations, migration will be joined into a single operation')
-            opsUp = [up.join(`\n`)]
-            opsDown = [down.join(`\n`)]
+    const createExecuteCommands = async (opsUp: string[], opsDown: string[]) => {
+        if (opsDown.length > 0 && opsUp.length !== opsDown.length) {
+            await ask('Warning: Migration operations for up and down have different amount of operations, please review generated migration script for miss-alignment in up and down operations. Press enter/return to continue')
         }
 
         return opsUp.map((_, i) => {
@@ -38,7 +34,7 @@ const generateMigrationScript = async ({ migrationName, execUp, execDown}: IMigr
 
     const scriptData = fs.readFileSync(path.join(__dirname, '..', 'templates', 'migration.template.js'), UTF8)
         .replace('$migrationName', migrationName)
-        .replace('$operations', createExecuteCommands(execUp, execDown))
+        .replace('$operations', await createExecuteCommands(execUp, execDown))
 
     const migrationDir = path.join(migrationsPath, migrationName)
     if (!fs.existsSync(migrationDir)) {
