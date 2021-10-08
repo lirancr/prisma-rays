@@ -28,10 +28,10 @@ const prepareTestEnvironment = async ({ setSchema, rays, raw, queryBuilder }: Pa
     await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
     setSchema(updatedSchema)
-    await rays('makemigration --name second')
+    await rays('makemigration --name second --autoresolve')
 
     setSchema(updatedSchema2)
-    await rays('makemigration --name third')
+    await rays('makemigration --name third --autoresolve')
 }
 
 const getUserRecord = async ({ raw, queryBuilder }: Parameters<TestFunction>[0]) => {
@@ -73,7 +73,7 @@ describe('Migrate', () => {
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'John' }))
 
-            await rays('makemigration --name second --blank')
+            await rays('makemigration --name second --blank --autoresolve')
 
             const migrations = getMigrationsDirs()
 
@@ -207,7 +207,7 @@ describe('Migrate', () => {
 
             const migrationsBeforeMakeMigration = getMigrationsDirs()
 
-            await rays('makemigration --name second --blank')
+            await rays('makemigration --name second --blank --autoresolve')
 
             const migrations = getMigrationsDirs()
 
@@ -260,7 +260,7 @@ describe('Migrate', () => {
 
             await raw.execute(queryBuilder.insertInto('User', { firstname: 'Jeff' }))
 
-            await rays('makemigration --name second --blank')
+            await rays('makemigration --name second --blank --autoresolve')
 
             const migrations = getMigrationsDirs()
 

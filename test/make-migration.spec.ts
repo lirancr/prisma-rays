@@ -20,7 +20,7 @@ const updatedSchema = `
 model Address {
   id        Int      @id @default(autoincrement())
   houseNumber      Int
-  street      String? @default("Doe")
+  street      String?
   city      String
 }
 
@@ -59,7 +59,7 @@ describe('MakeMigration', () => {
 
             setSchema(updatedSchema)
 
-            await rays(`makemigration --name second`)
+            await rays(`makemigration --name second --autoresolve`)
 
             // ensure migration creation
             const migrationDirectories = getMigrationsDirs()
@@ -97,7 +97,7 @@ describe('MakeMigration', () => {
         async ({rays, topology: {migrationsDir}, setSchema}) => {
             setSchema(updatedSchema)
 
-            await rays(`makemigration --name second --blank`)
+            await rays(`makemigration --name second --blank --autoresolve`)
 
             // ensure migration creation
             const migrationDirectories = getMigrationsDirs()
@@ -120,11 +120,11 @@ describe('MakeMigration', () => {
 
             setSchema(updatedSchema)
 
-            await rays(`makemigration --name second`)
+            await rays(`makemigration --name second --autoresolve`)
 
             setSchema(updatedSchema2)
 
-            await rays(`makemigration --name third`)
+            await rays(`makemigration --name third --autoresolve`)
 
             // ensure migration creation
             const migrationDirectories = getMigrationsDirs()
@@ -158,7 +158,7 @@ describe('MakeMigration', () => {
 
     test('Create blank migration file when no changes detected with blank option', withSchema({schema},
         async ({rays, topology: {migrationsDir, schema}, raw, queryBuilder}) => {
-            await rays(`makemigration --name second --blank`)
+            await rays(`makemigration --name second --blank --autoresolve`)
 
             // ensure migration creation
             const migrationDirectories = getMigrationsDirs()
@@ -186,7 +186,7 @@ describe('MakeMigration', () => {
 
     test('Do nothing when no changes detected without blank option', withSchema({schema},
         async ({rays}) => {
-            await rays(`makemigration --name second`)
+            await rays(`makemigration --name second --autoresolve`)
 
             // ensure migration not created
             const migrationDirectories = getMigrationsDirs()

@@ -185,6 +185,7 @@ Option | Values | Required | description
 --- | --- | --- | ---
 name | String | yes | suffix to give to the created migration.
 blank | None | no | allow the creation of a blank migration if no changes detected in the schema.
+autoresolve | None | no | Auto confirm migration generation warnings.
 
 
 Create a migration based on your recent schema changes without applying it to your database.
@@ -440,6 +441,60 @@ your database is empty so it cannot be used to generate the schema.
 Update your prisma schema to an initial point you want to support and run `npx rays push`.
 Then run `npx rays prepare` again
 
+#### Warning: Migration operations for up and down have different amount of operations
+
+This warning comes up after prisma rays break down the sql generated from prisma migrate into separate sql statements &
+the amount of statements in the up migration is different from the down migration. This means that the generated
+migration script will have miss-aligned tuple commands in it which makes the migration non-reversible until manually fixed.
+
+This is more common with sqlite database where some table operations require dropping the whole table and recreate it in multiple statements
+rather than apply a single alter table statement
+
+for example consider the following change:
+
+up migration - just add a column with default value
+```sql
+ALTER TABLE "User" ADD COLUMN "lastname" TEXT DEFAULT 'Doe';
+```
+
+down migration - in sql this change will require recreating the table with the additional column, populate it and replace the original table with the newly created one: 
+```sql
+CREATE TABLE "new_Users" ...;
+INSERT INTO "new_Users" ...;
+DROP TABLE "Users";
+ALTER TABLE "new_Users" RENAME TO "Users";
+```
+
+as a result of the difference in operation count prisma rays will generate this migration script
+```javascript
+module.exports = [
+    [addColumnLastName, createTableNewUsers],
+    [noop, insertIntoNewUsers],
+    [noop, dropTableUsers],
+    [noop, renameNewUsersTableToUsers],
+]
+```
+
+As you can see those script operations are not aligned - the down operation is not the reverse of the up operation in the tuple.
+This is where manual fixing is required to allow this operation to be reversible. In this case its enough to convert the multistep process into a single step process like so:
+
+```javascript
+module.exports = [
+    [
+        addColumnLastName,
+        async(...args) => {
+            await createTableNewUsers(...args)
+            await insertIntoNewUsers(...args)
+            await dropTableUsers(...args)
+            await renameNewUsersTableToUsers(...args)
+        }
+    ],
+]
+```
+
+This kind of fix is called grouping and  what `makemigration` does when given the `--autoresolve` flag (or via runtime prompt). Depending on your use case this sort of fix might not be enough/appropriate.
+
+You should always review created migration script when this sort of warning is showing to ensure reversibility of your migrations
 
 
 ## Upgrade from 1.x

@@ -18,7 +18,8 @@ const apiHelp: { [name: string]: () => unknown } = {
     makemigration: () => {
         logHelp('makemigration', 'Create a migration file based on your recent schema changes.', [
             ['name', 'suffix to give to the created migration.'],
-            ['blank', 'optional. allow the creation of a blank migration if no changes detected']
+            ['blank', 'optional. allow the creation of a blank migration if no changes detected'],
+            ['autoresolve', 'optional. Automatically handle migration operations count difference']
         ])
     },
     migrate: () => {
@@ -46,7 +47,8 @@ const commands: { [name: string]: () => Promise<unknown> } = {
     makemigration: async () => {
         const args = processArguments('name')
         const blank = 'blank' in args
-        return (require('./commands/makeMigration') as MakeMigrationCommand)(args.name, blank)
+        const autoResolveErrors = 'autoresolve' in args
+        return (require('./commands/makeMigration') as MakeMigrationCommand)(args.name, blank, autoResolveErrors)
     },
     migrate: async () => {
         const args = processArguments()

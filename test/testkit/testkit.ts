@@ -168,8 +168,8 @@ export const withSchema = (
         const databaseConnectionProvider = (_databaseName: string) =>
             engine.createConnection(_databaseName === databaseName ? testOptions.env.DATABASE_URL : engine.makeUrlForDatabase(testOptions.env.DATABASE_URL, _databaseName), {
                 log: () => {},
-                warn: () => {},
-                error: () => {},
+                warn: console.warn,
+                error: console.error,
                 info: () => {},
                 query: () => {},
             }, dbTopology)

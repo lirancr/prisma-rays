@@ -27,7 +27,7 @@ const command: PrepareCommand = async (approveReset): Promise<void> => {
     prismaSync(`db pull`)
     prismaSync(`migrate reset --force --skip-generate --skip-seed`)
 
-    const initialMigrationFile = await makeMigration('init')
+    const initialMigrationFile = await makeMigration('init', false, false)
 
     await migrate({name: initialMigrationFile!})
 }

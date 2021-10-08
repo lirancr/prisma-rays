@@ -12,29 +12,54 @@ interface IMigrationScriptParams {
     migrationName: string
     execUp: string[]
     execDown: string[]
+    autoResolveErrors: boolean
 }
 
-const generateMigrationScript = async ({ migrationName, execUp, execDown}: IMigrationScriptParams): Promise<void> => {
+const generateMigrationScript = async ({ migrationName, execUp, execDown, autoResolveErrors}: IMigrationScriptParams): Promise<void> => {
+
+    const createExecuteFunction = (fnBody: string): string => {
+        return `async ({ client }) => { ${fnBody || ''} }`
+    }
 
     const createExecuteCommand = (cmd: string = ''): string => {
         const command = cmd.replace(/`/g, '\\`')
-        const execute = command ? `await client.execute(\`${command}\`)` : ''
-        return `async ({ client }) => { ${execute} }`
+        if (!command) {
+            return ''
+        }
+        return `await client.execute(\`${command}\`)`
     }
 
-    const createExecuteCommands = async (opsUp: string[], opsDown: string[]) => {
-        if (opsDown.length > 0 && opsUp.length !== opsDown.length) {
-            await ask('Warning: Migration operations for up and down have different amount of operations, please review generated migration script for miss-alignment in up and down operations. Press enter/return to continue')
+    const createExecuteCommands = async (opsUp: string[], opsDown: string[], _autoResolveErrors: boolean): Promise<string> => {
+        const operationsCount = Math.max(opsUp.length, opsDown.length)
+        if (opsUp.length > 0 && opsDown.length > 0 && opsUp.length !== opsDown.length) {
+            logger.warn('Warning: Migration operations for up and down have different amount of operations, please review generated migration script for miss-alignment in up and down operations')
+            let autoResolveErrors = _autoResolveErrors
+            if (!_autoResolveErrors) {
+                autoResolveErrors = await ask('Attempt to auto-resolve this issue? (y/n): ') === 'y'
+            }
+
+            if (autoResolveErrors) {
+                logger.warn('Warning: migration operation count miss-match auto-resolved, you should review the generated migration script')
+
+                const joinMigrationOperations = (commands: string[]): string => {
+                    return commands.map(createExecuteCommand).join('\n')
+                }
+
+                return `[${createExecuteFunction(joinMigrationOperations(opsUp))}, ${createExecuteFunction(joinMigrationOperations(opsDown))}],`
+            }
         }
 
-        return opsUp.map((_, i) => {
-            return `[${createExecuteCommand(opsUp[i])}, ${createExecuteCommand(opsDown[i])}],`
+        const arr = new Array(operationsCount).fill(null)
+        return arr.map((_, i) => {
+            const upCommand = createExecuteCommand(opsUp[i])
+            const downCommand = createExecuteCommand(opsDown[i])
+            return `[${createExecuteFunction(upCommand)}, ${createExecuteFunction(downCommand)}],`
         }).join('\n')
     }
 
     const scriptData = fs.readFileSync(path.join(__dirname, '..', 'templates', 'migration.template.js'), UTF8)
         .replace('$migrationName', migrationName)
-        .replace('$operations', await createExecuteCommands(execUp, execDown))
+        .replace('$operations', await createExecuteCommands(execUp, execDown, autoResolveErrors))
 
     const migrationDir = path.join(migrationsPath, migrationName)
     if (!fs.existsSync(migrationDir)) {
@@ -50,9 +75,10 @@ const generateMigrationScript = async ({ migrationName, execUp, execDown}: IMigr
  *
  * @param name suffix to append to the file name
  * @param blank allow creation of a blank migration if no changes are detected
+ * @param autoResolveErrors toggle automatic handling of up/down operation count miss-match
  * @return {Promise<string|null>} the full name of the newly created migration
  */
-const command: MakeMigrationCommand = async (name: string, blank = false): Promise<string|null> => {
+const command: MakeMigrationCommand = async (name: string, blank: boolean, autoResolveErrors: boolean): Promise<string|null> => {
     // prepare sterile environment for migration generating
     const isShadowDatabaseConfigured = shadowDatabaseName!!
 
@@ -113,7 +139,7 @@ const command: MakeMigrationCommand = async (name: string, blank = false): Promi
             migrationName: newMigration,
             execUp: [],
             execDown: [],
-
+            autoResolveErrors,
         }
 
         migrationFileParams.execUp = splitMultilineQuery(fs.readFileSync(path.join(migrationsPath, newMigration, 'migration.sql'), UTF8))
