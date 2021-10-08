@@ -74,9 +74,9 @@ const command: MigrateCommand = async ({ name, fake } = {}): Promise<void> => {
                     await operations[lastSuccessfulOperationIndex + 1][0]({client})
                     await executeRawOne(queryBuilder.transactionCommit())
                     lastSuccessfulOperationIndex++
-                } catch (e) {
+                } catch (e: any) {
                     await executeRawOne(queryBuilder.transactionRollback())
-                    logger.error(`Migration failed [index: ${lastSuccessfulOperationIndex + 1}]:`, e)
+                    logger.error(`Migration failed [index: ${lastSuccessfulOperationIndex + 1}]:`, e.message)
                     migrationError = e
                     break
                 }
