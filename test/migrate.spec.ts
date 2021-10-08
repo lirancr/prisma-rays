@@ -88,8 +88,8 @@ describe('Migrate', () => {
                 // language=js
                 `module.exports = [
                     [
-                        async ({ client }) => { await client.execute('${updateQuery}', ['Jeff']) },
-                        async ({ client }) => { await client.execute('${updateQuery}', ['Failed']) }
+                        async ({ client }) => { await client.execute(\`${updateQuery}\`, ['Jeff']) },
+                        async ({ client }) => { await client.execute(\`${updateQuery}\`, ['Failed']) }
                     ]
                 ]`)
 
