@@ -27,8 +27,8 @@ const generateMigrationScript = async ({ migrationName, execUp, execDown}: IMigr
         let opsDown = down
         if (up.length !== down.length) {
             logger.warn('Migration operations for up and down have different amount of operations, migration will be joined into a single operation')
-            opsUp = [up.join(`;\n`)]
-            opsDown = [down.join(`;\n`)]
+            opsUp = [up.join(`\n`)]
+            opsDown = [down.join(`\n`)]
         }
 
         return opsUp.map((_, i) => {
