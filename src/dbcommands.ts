@@ -99,7 +99,7 @@ export const dropAllTables = async (databaseUrl: string): Promise<void> => {
     const tables = await queryRawOne(query, connection) as { tablename: string }[]
     if (tables.length > 0) {
         const command = tables.map(({tablename}) => queryBuilder.dropTableIfExistsCascade(tablename)).join('\n')
-        await executeRaw(preQuery + command + postQuery, connection)
+        await executeRaw(preQuery + command + postQuery, true, connection)
     }
 
     if ((await queryRawOne(query, connection) as { tablename: string }[]).length > 0) {
@@ -109,20 +109,26 @@ export const dropAllTables = async (databaseUrl: string): Promise<void> => {
     await client.disconnect()
 }
 
-export const executeRaw = async (query: string, connection: Promise<IDatabaseConnection> = dbConnection): Promise<unknown> => {
+export const executeRaw = async (query: string, transaction = true, connection: Promise<IDatabaseConnection> = dbConnection): Promise<unknown> => {
     const commands = splitMultilineQuery(query)
 
     const client = await connection
-    await client.execute(queryBuilder.transactionBegin())
+    if (transaction) {
+        await client.execute(queryBuilder.transactionBegin())
+    }
     try {
         let res
         for (const cmd of commands) {
             res = await client.execute(cmd)
         }
-        await client.execute(queryBuilder.transactionCommit())
+        if (transaction) {
+            await client.execute(queryBuilder.transactionCommit())
+        }
         return res
     } catch (e) {
-        await client.execute(queryBuilder.transactionRollback())
+        if (transaction) {
+            await client.execute(queryBuilder.transactionRollback())
+        }
         throw e
     }
 }

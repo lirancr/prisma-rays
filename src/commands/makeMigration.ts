@@ -100,8 +100,8 @@ const command: MakeMigrationCommand = async (name: string, blank: boolean, autoR
         await copyFile(dbFilePath, shadowDbFilePath)
         await dropAllTables(shadowDbUrl)
     } else {
-        await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
-        await executeRaw(queryBuilder.createDatabase(shadowDbName))
+        await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName), false)
+        await executeRaw(queryBuilder.createDatabase(shadowDbName), false)
     }
 
     const cleanup = async () => {
@@ -118,7 +118,7 @@ const command: MakeMigrationCommand = async (name: string, blank: boolean, autoR
             logger.log('removing database file', shadowDbUrl)
             await rm(databaseEngine.getDatabaseFilesPath(shadowDbUrl, { schemaPath: schema }).db)
         } else {
-            await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName))
+            await executeRaw(queryBuilder.dropDatabaseIfExists(shadowDbName), false)
         }
     }
 
