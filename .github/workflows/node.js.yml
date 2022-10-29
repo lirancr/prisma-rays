@@ -41,8 +41,8 @@ jobs:
     - name: Setup postgresql cli tool
       run: apt-get update && apt-get install --yes postgresql-client
     - run: psql -h postgres -U postgres -c 'create database testdb;'
-    - run: psql -c 'create database prisma_shadow;' -U postgres
-    - run: psql -c 'create database rays_shadow;' -U postgres
+    - run: psql -h postgres -U postgres -c 'create database prisma_shadow;'
+    - run: psql -h postgres -U postgres -c 'create database rays_shadow;'
     - name: Testing against postgresql db
       run: npm test:ci:postgresql
 
