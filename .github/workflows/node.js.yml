@@ -50,6 +50,6 @@ jobs:
       env:
         PGPASSWORD: postgres
     - name: Testing against postgresql db
-      run: npm test:ci:postgresql
+      run: npm run test:ci:postgresql
 
 #    - run: npm test:ci:sqlite
