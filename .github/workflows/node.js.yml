@@ -37,6 +37,8 @@ jobs:
 #    - run: npm test:ci:mysql
 
     # Setup postgresql test environment and run tests
+    - name: Install PostgreSQL client
+    - run: apt-get update && apt-get install --yes postgresql-client
     - run: psql -c 'create database testdb;' -U postgres
     - run: psql -c 'create database prisma_shadow;' -U postgres
     - run: psql -c 'create database rays_shadow;' -U postgres
