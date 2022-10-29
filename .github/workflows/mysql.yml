@@ -28,16 +28,19 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=10s --health-retries=10
 
     steps:
+    # Setup MySQL test environment
+    - name: Setup MySQL cli tool
+      run: apt-get update && apt-get install --yes mysql-client
+    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE testdb;'
+    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE prisma_shadow;'
+    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE rays_shadow;'
+    # Build project
     - name: Check out code from repository
       uses: actions/checkout@v3
     - run: npm ci
     - run: npm run build
     - run: npm run pretest
 
-    # Setup MySQL test environment and run tests
-    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE testdb;'
-    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE prisma_shadow;'
-    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE rays_shadow;'
     - name: Testing against MySQL db
       run: npm run test:ci
       env:

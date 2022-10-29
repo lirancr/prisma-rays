@@ -15,11 +15,13 @@ jobs:
     container: node:14.20-bullseye
 
     steps:
+    # Build project
     - name: Check out code from repository
       uses: actions/checkout@v3
     - run: npm ci
     - run: npm run build
     - run: npm run pretest
+
     - name: Testing against SQLite db
       run: npm run test:ci
       env:

@@ -30,13 +30,7 @@ jobs:
           --health-retries 5
 
     steps:
-    - name: Check out code from repository
-      uses: actions/checkout@v3
-    - run: npm ci
-    - run: npm run build
-    - run: npm run pretest
-
-    # Setup postgresql test environment and run tests
+    # Setup postgresql test environment
     - name: Setup postgresql cli tool
       run: apt-get update && apt-get install --yes postgresql-client
     - run: psql -h postgres -U postgres -c 'create database testdb;'
@@ -48,6 +42,13 @@ jobs:
     - run: psql -h postgres -U postgres -c 'create database rays_shadow;'
       env:
         PGPASSWORD: postgres
+    # Build project
+    - name: Check out code from repository
+      uses: actions/checkout@v3
+    - run: npm ci
+    - run: npm run build
+    - run: npm run pretest
+
     - name: Testing against postgresql db
       run: npm run test:ci
       env:
