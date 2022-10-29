@@ -36,7 +36,7 @@ jobs:
 
     # Setup MySQL test environment and run tests
     - name: Setup mysql cli tool
-      run: apt-get update && apt-get install --yes postgresql-client
+      run: apt-get update && apt-get install --yes mysql-shell
     - run: mysql -e 'CREATE DATABASE testdb;'
     - run: mysql -e 'CREATE DATABASE prisma_shadow;'
     - run: mysql -e 'CREATE DATABASE rays_shadow;'
