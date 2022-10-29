@@ -12,7 +12,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    container: node:14.20-alpine
+    container: node:14.20-bullseye
 
     services:
       # Label used to access the service container
