@@ -1,0 +1,28 @@
+name: SQLite integration tests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+    types: [ opened, reopened, synchronize ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    container: node:14.20-bullseye
+
+    steps:
+    - name: Check out code from repository
+      uses: actions/checkout@v3
+    - run: npm ci
+    - run: npm run build
+    - run: npm run pretest
+    - name: Testing against postgresql db
+      run: npm run test:ci
+      env:
+        VERBOSE_LOGGING: true
+        TEST_PROVIDER: sqlite
+        TEST_DATABASE_URL: file:../testdb.db
