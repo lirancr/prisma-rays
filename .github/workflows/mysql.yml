@@ -1,0 +1,49 @@
+name: MySQL integration tests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+    types: [ opened, reopened, synchronize ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    container: node:14.20-bullseye
+
+    services:
+      # Label used to access the service container
+      mysql:
+        # Docker Hub image
+        image: mysql:5.7
+        # Provide the password for postgres
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        ports:
+          - 3306:3306
+        # needed because the mysql container does not provide a healthcheck
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=10s --health-retries=10
+
+    steps:
+    - name: Check out code from repository
+      uses: actions/checkout@v3
+    - run: npm ci
+    - run: npm run build
+    - run: npm run pretest
+
+    # Setup MySQL test environment and run tests
+    - name: Setup mysql cli tool
+      run: apt-get update && apt-get install --yes postgresql-client
+    - run: mysql -e 'CREATE DATABASE testdb;'
+    - run: mysql -e 'CREATE DATABASE prisma_shadow;'
+    - run: mysql -e 'CREATE DATABASE rays_shadow;'
+    - name: Testing against MySQL db
+      run: npm run test:ci
+      env:
+        TEST_PROVIDER: mysql
+        TEST_DATABASE_URL: mysql://root@mysql:3306/testdb
+        TEST_SHADOW_DATABASE_URL: mysql://root@mysql:3306/prisma_shadow
+        TEST_SHADOW_DATABASE_NAME: rays_shadow

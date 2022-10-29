@@ -20,7 +20,7 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npm run pretest
-    - name: Testing against postgresql db
+    - name: Testing against SQLite db
       run: npm run test:ci
       env:
         VERBOSE_LOGGING: true
