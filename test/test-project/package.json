@@ -16,6 +16,6 @@
     "prisma": "file:../../node_modules/prisma"
   },
   "engines": {
-    "node": ">=12.2.0"
+    "node": ">=14.17.0"
   }
 }
