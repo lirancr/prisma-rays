@@ -35,11 +35,9 @@ jobs:
     - run: npm run pretest
 
     # Setup MySQL test environment and run tests
-    - name: Setup mysql cli tool
-      run: apt-get update && apt-get install --yes mysql-shell
-    - run: mysql -e 'CREATE DATABASE testdb;'
-    - run: mysql -e 'CREATE DATABASE prisma_shadow;'
-    - run: mysql -e 'CREATE DATABASE rays_shadow;'
+    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE testdb;'
+    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE prisma_shadow;'
+    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE rays_shadow;'
     - name: Testing against MySQL db
       run: npm run test:ci
       env:
