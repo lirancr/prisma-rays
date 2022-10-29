@@ -31,9 +31,9 @@ jobs:
     # Setup MySQL test environment
     - name: Setup MySQL cli tool
       run: apt-get update && apt-get install --yes default-mysql-client
-    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE testdb;'
-    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE prisma_shadow;'
-    - run: sudo /etc/init.d/mysql -e 'CREATE DATABASE rays_shadow;'
+    - run: mysql -e 'CREATE DATABASE testdb;'
+    - run: mysql -e 'CREATE DATABASE prisma_shadow;'
+    - run: mysql -e 'CREATE DATABASE rays_shadow;'
     # Build project
     - name: Check out code from repository
       uses: actions/checkout@v3
