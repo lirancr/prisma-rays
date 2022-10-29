@@ -1,0 +1,58 @@
+name: Postgresql integration tests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+    types: [ opened, reopened, synchronize ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    container: node:14.20-bullseye
+
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    # Setup postgresql test environment
+    - name: Setup postgresql cli tool
+      run: apt-get update && apt-get install --yes postgresql-client
+    - run: psql -h postgres -U postgres -c 'create database testdb;'
+      env:
+        PGPASSWORD: postgres
+    - run: psql -h postgres -U postgres -c 'create database prisma_shadow;'
+      env:
+        PGPASSWORD: postgres
+    - run: psql -h postgres -U postgres -c 'create database rays_shadow;'
+      env:
+        PGPASSWORD: postgres
+    # Build project
+    - name: Check out code from repository
+      uses: actions/checkout@v3
+    - run: npm ci
+    - run: npm run build
+    - run: npm run pretest
+
+    - name: Testing against postgresql db
+      run: npm run test:ci
+      env:
+        TEST_PROVIDER: postgresql
+        TEST_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/testdb
+        TEST_SHADOW_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/prisma_shadow
+        TEST_SHADOW_DATABASE_NAME: rays_shadow
