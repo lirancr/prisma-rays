@@ -8,8 +8,7 @@ on:
     types: [ opened, reopened, synchronize ]
 
 jobs:
-  build:
-
+  test_mysql:
     runs-on: ubuntu-latest
 
     container: node:14.20-bullseye
