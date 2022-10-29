@@ -1,0 +1,45 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    container: node:14.20-alpine
+
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Check out code from repository
+      uses: actions/checkout@v3
+    - run: npm ci
+    - run: npm build
+    - run: npm run pretest
+#    - run: npm test:ci:mysql
+
+    # Setup postgresql test environment and run tests
+    - run: psql -c 'create database testdb;' -U postgres
+    - run: psql -c 'create database prisma_shadow;' -U postgres
+    - run: psql -c 'create database rays_shadow;' -U postgres
+    - run: npm test:ci:postgresql
+    
+#    - run: npm test:ci:sqlite
