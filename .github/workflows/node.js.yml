@@ -38,10 +38,15 @@ jobs:
 #    - run: npm test:ci:mysql
 
     # Setup postgresql test environment and run tests
-    - run: apt-get update && apt-get install --yes postgresql-client
-    - run: psql -c 'create database testdb;' -U postgres
-    - run: psql -c 'create database prisma_shadow;' -U postgres
-    - run: psql -c 'create database rays_shadow;' -U postgres
-    - run: npm test:ci:postgresql
+    - name: Setup postgresql cli tool
+      run: apt-get update && apt-get install --yes postgresql-client
+    - name: Setup test database
+      run: psql -c 'create database testdb;' -U postgres
+    - name: Setup prisma shadow database
+      run: psql -c 'create database prisma_shadow;' -U postgres
+    - name: Setup prisma rays shadow database
+      run: psql -c 'create database rays_shadow;' -U postgres
+    - name: Testing against postgresql db
+      run: npm test:ci:postgresql
 
 #    - run: npm test:ci:sqlite
