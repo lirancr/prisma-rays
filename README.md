@@ -1,4 +1,6 @@
-[![Build Status](https://app.travis-ci.com/lirancr/prisma-rays.svg?branch=master)](https://app.travis-ci.com/lirancr/prisma-rays)
+[![MySQL integration tests](https://github.com/lirancr/prisma-rays/actions/workflows/mysql.yml/badge.svg)](https://github.com/lirancr/prisma-rays/actions/workflows/mysql.yml)
+[![Postgresql integration tests](https://github.com/lirancr/prisma-rays/actions/workflows/postgresql.yml/badge.svg)](https://github.com/lirancr/prisma-rays/actions/workflows/postgresql.yml)
+[![SQLite integration tests](https://github.com/lirancr/prisma-rays/actions/workflows/sqlite.yml/badge.svg)](https://github.com/lirancr/prisma-rays/actions/workflows/sqlite.yml)
 [![NPM Version](https://badge.fury.io/js/prisma-rays.svg?style=flat)](https://www.npmjs.com/package/prisma-rays)
 
 # Prisma Rays 💫
