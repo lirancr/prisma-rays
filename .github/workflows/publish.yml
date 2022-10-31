@@ -1,0 +1,21 @@
+name: Publish to NPM
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  test_sqlite:
+    runs-on: ubuntu-latest
+
+    container: node:14.20-bullseye
+
+    steps:
+    # Build project
+    - name: Check out code from repository
+      uses: actions/checkout@v3
+    - run: npm ci
+    - run: npm run build
+    - uses: JS-DevTools/npm-publish@v1
+      with:
+        token: ${{ secrets.NPM_TOKEN }}
