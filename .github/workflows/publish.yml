@@ -5,7 +5,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  test_sqlite:
+  publish:
     runs-on: ubuntu-latest
 
     container: node:14.20-bullseye
